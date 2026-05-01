@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma *)",
+      "Bash(export DATABASE_URL=\"file:./dev.db\")",
+      "Bash(npm run *)",
+      "Bash(nohup npm *)",
+      "Bash(echo \"started pid=$!\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"ingest_no_auth=%{http_code}\\\\n\" -X POST http://localhost:3000/api/ingest -H \"Content-Type: application/json\" -d '{\"type\":\"note\",\"content\":\"hello\"}')",
+      "Bash(curl -s -o /dev/null -w \"ingest_uipath=%{http_code}\\\\n\" -X POST http://localhost:3000/api/ingest -H \"Content-Type: application/json\" -H \"x-api-key: dhl-uipath-secret-2024\" -d '{\"type\":\"note\",\"content\":\"Verify all parcels are scanned at induction. Open scanner. Scan barcode. Confirm weight. Push to belt.\"}')",
+      "Bash(curl -s http://localhost:3000/api/duplicate-check -X POST -H \"Content-Type: application/json\" -d '{\"content\":\"Verify all parcels are scanned at induction. Open scanner. Scan barcode. Confirm weight. Push to belt.\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/ingest -H \"Content-Type: application/json\" -H \"x-api-key: dhl-uipath-secret-2024\" -d '{\"type\":\"email\",\"content\":\"From: ops@dhl.com\\\\nSubject: New customs hold procedure\\\\n\\\\nAll inbound parcels stuck at customs must be flagged in DAC. Open the parcel record. Click Hold. Enter customs reason code. Notify customer within 2 hours. Document in case log.\"}')",
+      "Bash(curl -s -X GET \"http://localhost:3000/api/articles?status=draft\" -H \"x-api-key: dhl-uipath-secret-2024\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('articles:',len\\(d['articles']\\),'total:',d['pagination']['total']\\); a=d['articles'][0]; print\\('id:',a['id'],'title:',a['title'][:60],'status:',a['status']\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/articles?status=draft\" -H \"x-api-key: dhl-uipath-secret-2024\")",
+      "Bash(curl -s \"http://localhost:3000/api/stats\" -H \"x-api-key: dhl-uipath-secret-2024\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('articles:',d['articles']\\); print\\('inputs:',d['inputs']\\)\")",
+      "Bash(curl -s \"http://localhost:3000/api/articles?status=published\" -H \"x-api-key: dhl-uipath-secret-2024\")",
+      "Bash(kill 1308)",
+      "Bash(pkill -f \"next dev\")"
+    ]
+  }
+}
