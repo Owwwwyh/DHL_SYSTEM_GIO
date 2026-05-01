@@ -70,7 +70,12 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userId = (session.user as { id?: string }).id;
+  const sessionUserId = (session.user as { id?: string }).id;
+  let userId: string | undefined;
+  if (sessionUserId) {
+    const exists = await prisma.user.findUnique({ where: { id: sessionUserId }, select: { id: true } });
+    userId = exists?.id;
+  }
   const body = await req.json();
 
   const article = await prisma.article.create({

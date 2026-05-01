@@ -365,7 +365,7 @@ function CodeBlock({ code, label }: { code: string; label?: string }) {
 
 export default function ApiDocsPage() {
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-8 max-w-6xl mx-auto">
       {/* Page header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">

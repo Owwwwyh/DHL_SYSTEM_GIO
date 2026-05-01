@@ -35,7 +35,11 @@ export async function PUT(
   if (!isUiPath) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    userId = (session.user as { id?: string }).id;
+    const sessionUserId = (session.user as { id?: string }).id;
+    if (sessionUserId) {
+      const exists = await prisma.user.findUnique({ where: { id: sessionUserId }, select: { id: true } });
+      userId = exists?.id;
+    }
   }
   const body = await req.json();
 
