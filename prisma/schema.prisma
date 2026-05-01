@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  name            String?
+  password        String
+  role            String           @default("editor")
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  rawInputs       RawInput[]
+  articles        Article[]
+  articleVersions ArticleVersion[]
+}
+
+model RawInput {
+  id        String   @id @default(cuid())
+  type      String
+  content   String
+  filePath  String?
+  fileHash  String?
+  status    String   @default("pending")
+  errorMsg  String?
+  source    String   @default("web")
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  article   Article?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Article {
+  id           String           @id @default(cuid())
+  title        String
+  summary      String
+  steps        String
+  tags         String
+  relatedLinks String           @default("[]")
+  sourceType   String
+  status       String           @default("draft")
+  hasConflict  Boolean          @default(false)
+  conflictNote String?
+  rawInputId   String?          @unique
+  rawInput     RawInput?        @relation(fields: [rawInputId], references: [id])
+  userId       String?
+  user         User?            @relation(fields: [userId], references: [id])
+  versions     ArticleVersion[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model ArticleVersion {
+  id        String   @id @default(cuid())
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  status    String
+  title     String?
+  summary   String?
+  steps     String?
+  tags      String?
+  action    String
+  note      String?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}

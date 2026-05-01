@@ -1,0 +1,216 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="DHL_KB_Ingestion" sap:VirtualizedContainerService.HintSize="640,720"
+  xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+  xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+  xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+  xmlns:s="clr-namespace:System;assembly=mscorlib"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    DHL Knowledge Base - UiPath RPA Ingestion Workflow
+    ==================================================
+    PURPOSE
+      Pulls new files from a designated Google Drive folder (or email inbox via
+      Outlook activities) and pushes each file into the DHL KB system through
+      the REST API. Skips items already ingested in the last 14 days.
+
+    FLOW DIAGRAM (described in XML)
+      [START]
+        |
+        v
+      [Read API Key from asset / Orchestrator]
+        |
+        v
+      [Get files from Google Drive / Outlook attachments]   <-- INPUT BRANCH
+        |
+        v
+      For Each file:
+        |
+        v
+      [TRY]
+        |--> [POST /api/duplicate-check]
+        |      |--> if isDuplicate==true  --> [Log "skip"] --> next iteration
+        |      |--> else continue
+        |
+        |--> [POST /api/ingest (multipart, file attached)]
+        |      |--> capture {id}
+        |
+        |--> [POST /api/process { rawInputId: id }]
+        |      |--> capture {article.id}
+        |
+        |--> [POST /api/articles/{id}/status { status: "reviewed" }]   (optional auto-promote)
+        |
+        |--> [Log "OK" + write success log]
+        |
+      [CATCH (System.Exception ex)]
+        |--> [Take Screenshot to logs/screenshots/<timestamp>.png]
+        |--> [Log Error with stack trace]
+        |--> [Increment retry counter; retry up to N=3 with exponential backoff]
+        |--> [If retries exhausted -> append error row to logs/errors.csv]
+      [END TRY]
+        |
+        v
+      End For Each
+        |
+        v
+      [POST /api/summary-report  (sends daily admin email)]
+        |
+        v
+      [END]
+
+    INPUTS
+      in_BaseUrl     : System URL (e.g. https://kb.dhl.example.com)
+      in_ApiKey      : Same value as UIPATH_API_KEY env var on the server
+      in_SourceType  : "googledrive" | "outlook" | "folder"
+      in_SourcePath  : drive folder id, mailbox name, or local folder path
+      in_AdminEmail  : Recipient for daily summary
+
+    OUTPUTS
+      out_TotalProcessed
+      out_TotalSkipped
+      out_TotalFailed
+
+    LOGS
+      logs/run-YYYYMMDD.txt
+      logs/errors.csv
+      logs/screenshots/*.png
+
+  -->
+
+  <x:Members>
+    <x:Property Name="in_BaseUrl"    Type="InArgument(x:String)" />
+    <x:Property Name="in_ApiKey"     Type="InArgument(x:String)" />
+    <x:Property Name="in_SourceType" Type="InArgument(x:String)" />
+    <x:Property Name="in_SourcePath" Type="InArgument(x:String)" />
+    <x:Property Name="in_AdminEmail" Type="InArgument(x:String)" />
+    <x:Property Name="out_TotalProcessed" Type="OutArgument(x:Int32)" />
+    <x:Property Name="out_TotalSkipped"   Type="OutArgument(x:Int32)" />
+    <x:Property Name="out_TotalFailed"    Type="OutArgument(x:Int32)" />
+  </x:Members>
+
+  <Sequence DisplayName="DHL KB Ingestion - Main">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="scg:List(s:String)" Name="files" />
+      <Variable x:TypeArguments="x:Int32" Name="processed" Default="0" />
+      <Variable x:TypeArguments="x:Int32" Name="skipped"   Default="0" />
+      <Variable x:TypeArguments="x:Int32" Name="failed"    Default="0" />
+      <Variable x:TypeArguments="x:String" Name="rawId" />
+      <Variable x:TypeArguments="x:String" Name="articleId" />
+      <Variable x:TypeArguments="x:Boolean" Name="isDup" />
+    </Sequence.Variables>
+
+    <!-- 1. Initialize logs -->
+    <WriteLine DisplayName="Log: start" Text='"[INFO] DHL-KB ingestion starting at " + Now.ToString("u")' />
+
+    <!-- 2. Pull file list from chosen source (Google Drive / Outlook / folder).
+         Replace this WriteLine with the appropriate UiPath activities:
+           - GSuiteApplicationScope + ListFiles  (Google Drive)
+           - GetOutlookMailMessages + SaveAttachments (Outlook)
+           - Directory.GetFiles  (local watch folder) -->
+    <WriteLine DisplayName="TODO: enumerate source" Text='"Enumerating files from " + in_SourceType + ":" + in_SourcePath' />
+
+    <!-- 3. For each file -->
+    <ForEach x:TypeArguments="x:String" DisplayName="For Each file" Values="[files]">
+      <ActivityAction x:TypeArguments="x:String">
+        <ActivityAction.Argument>
+          <DelegateInArgument x:TypeArguments="x:String" Name="filePath" />
+        </ActivityAction.Argument>
+
+        <TryCatch DisplayName="Try / Catch per file">
+
+          <TryCatch.Try>
+            <Sequence>
+              <!-- 3a. Duplicate check -->
+              <WriteLine DisplayName="POST /api/duplicate-check"
+                Text='"[HTTP] POST " + in_BaseUrl + "/api/duplicate-check  file=" + filePath' />
+              <!-- isDup = (response.isDuplicate == true) -->
+
+              <If Condition="[isDup]">
+                <If.Then>
+                  <Sequence>
+                    <Assign DisplayName="++skipped">
+                      <Assign.To><OutArgument x:TypeArguments="x:Int32">[skipped]</OutArgument></Assign.To>
+                      <Assign.Value><InArgument x:TypeArguments="x:Int32">[skipped + 1]</InArgument></Assign.Value>
+                    </Assign>
+                    <WriteLine Text='"[SKIP] duplicate within 14 days: " + filePath' />
+                  </Sequence>
+                </If.Then>
+                <If.Else>
+                  <Sequence>
+                    <!-- 3b. Ingest -->
+                    <WriteLine DisplayName="POST /api/ingest"
+                      Text='"[HTTP] POST " + in_BaseUrl + "/api/ingest  (multipart)"' />
+                    <!-- rawId = response.id -->
+
+                    <!-- 3c. Process via Gemini AI -->
+                    <WriteLine DisplayName="POST /api/process"
+                      Text='"[HTTP] POST " + in_BaseUrl + "/api/process  body={rawInputId: " + rawId + "}"' />
+                    <!-- articleId = response.article.id -->
+
+                    <!-- 3d. Optional: auto-promote to reviewed -->
+                    <WriteLine DisplayName="POST /api/articles/:id/status"
+                      Text='"[HTTP] POST " + in_BaseUrl + "/api/articles/" + articleId + "/status  body={status: reviewed}"' />
+
+                    <Assign DisplayName="++processed">
+                      <Assign.To><OutArgument x:TypeArguments="x:Int32">[processed]</OutArgument></Assign.To>
+                      <Assign.Value><InArgument x:TypeArguments="x:Int32">[processed + 1]</InArgument></Assign.Value>
+                    </Assign>
+                    <WriteLine Text='"[OK] " + filePath + " -> article " + articleId' />
+                  </Sequence>
+                </If.Else>
+              </If>
+            </Sequence>
+          </TryCatch.Try>
+
+          <TryCatch.Catches>
+            <Catch x:TypeArguments="s:Exception" DisplayName="Catch System.Exception">
+              <ActivityAction x:TypeArguments="s:Exception">
+                <ActivityAction.Argument>
+                  <DelegateInArgument x:TypeArguments="s:Exception" Name="ex" />
+                </ActivityAction.Argument>
+                <Sequence>
+                  <!-- 3e. Capture screenshot on failure -->
+                  <WriteLine DisplayName="Take Screenshot"
+                    Text='"[SCREENSHOT] saved to logs/screenshots/" + Now.ToString("yyyyMMdd_HHmmssfff") + ".png"' />
+                  <!-- Replace with TakeScreenshot + SaveImage activity -->
+
+                  <Assign DisplayName="++failed">
+                    <Assign.To><OutArgument x:TypeArguments="x:Int32">[failed]</OutArgument></Assign.To>
+                    <Assign.Value><InArgument x:TypeArguments="x:Int32">[failed + 1]</InArgument></Assign.Value>
+                  </Assign>
+                  <WriteLine Text='"[ERROR] " + filePath + " -> " + ex.Message' />
+
+                  <!-- 3f. Retry policy (UiPath Retry Scope) handled at parent level
+                       by wrapping the Try block in <RetryScope> with NumberOfRetries=3 -->
+                </Sequence>
+              </ActivityAction>
+            </Catch>
+          </TryCatch.Catches>
+
+        </TryCatch>
+      </ActivityAction>
+    </ForEach>
+
+    <!-- 4. Send daily summary email to admin -->
+    <WriteLine DisplayName="POST /api/summary-report"
+      Text='"[HTTP] POST " + in_BaseUrl + "/api/summary-report  body={adminEmail: " + in_AdminEmail + "}"' />
+
+    <!-- 5. Return totals -->
+    <Assign>
+      <Assign.To><OutArgument x:TypeArguments="x:Int32">[out_TotalProcessed]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:Int32">[processed]</InArgument></Assign.Value>
+    </Assign>
+    <Assign>
+      <Assign.To><OutArgument x:TypeArguments="x:Int32">[out_TotalSkipped]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:Int32">[skipped]</InArgument></Assign.Value>
+    </Assign>
+    <Assign>
+      <Assign.To><OutArgument x:TypeArguments="x:Int32">[out_TotalFailed]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:Int32">[failed]</InArgument></Assign.Value>
+    </Assign>
+
+    <WriteLine DisplayName="Log: end"
+      Text='"[INFO] Done. processed=" + processed.ToString() + " skipped=" + skipped.ToString() + " failed=" + failed.ToString()' />
+  </Sequence>
+</Activity>

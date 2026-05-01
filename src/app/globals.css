@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { @apply bg-gray-50 text-gray-900; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+  .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
+}
