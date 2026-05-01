@@ -135,14 +135,14 @@ export default function UploadPage() {
   );
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Upload Raw Input</h1>
         <p className="text-gray-500 mt-1">Upload any format — AI converts it to a structured SOP article.</p>
       </div>
 
-      <div className="max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <form onSubmit={handleSubmit} className="space-y-6 lg:col-span-2">
           {/* Input type selector */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <label className="block text-sm font-semibold text-gray-700 mb-3">1. Select Input Type</label>
@@ -232,6 +232,59 @@ export default function UploadPage() {
             🚀 Convert to SOP Article with AI
           </button>
         </form>
+
+        {/* Right-hand info panel */}
+        <aside className="lg:col-span-1 space-y-4">
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>🤖</span> How it works
+            </h3>
+            <ol className="space-y-3 text-sm text-gray-600">
+              <li className="flex gap-2">
+                <span className="bg-dhl-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">1</span>
+                <span>Pick the input type and paste content or drop a file.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="bg-dhl-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">2</span>
+                <span>System hashes the content and skips it if seen in the last 14 days.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="bg-dhl-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">3</span>
+                <span>Gemini AI extracts title, summary, steps, tags &amp; related links.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="bg-dhl-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">4</span>
+                <span>Article lands in <strong>Drafts</strong> for your review.</span>
+              </li>
+            </ol>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <span>📎</span> Supported formats
+            </h3>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex justify-between"><span>📄 PDF</span><span className="text-gray-400 text-xs">.pdf</span></li>
+              <li className="flex justify-between"><span>📝 Word</span><span className="text-gray-400 text-xs">.docx, .doc</span></li>
+              <li className="flex justify-between"><span>🖼️ Screenshot</span><span className="text-gray-400 text-xs">.png, .jpg</span></li>
+              <li className="flex justify-between"><span>📧 Email</span><span className="text-gray-400 text-xs">.txt, .eml</span></li>
+              <li className="flex justify-between"><span>💬 Chat</span><span className="text-gray-400 text-xs">.txt</span></li>
+              <li className="flex justify-between"><span>📊 Slides</span><span className="text-gray-400 text-xs">.txt, .pptx</span></li>
+            </ul>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+            <h3 className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
+              <span>💡</span> Tips for best results
+            </h3>
+            <ul className="text-sm text-blue-800 space-y-1.5 list-disc list-inside">
+              <li>Include sender / context lines for emails.</li>
+              <li>Number any explicit steps you already have.</li>
+              <li>Screenshots: add a one-line description of the screen.</li>
+              <li>Long PDFs: break into focused sections for cleaner SOPs.</li>
+            </ul>
+          </div>
+        </aside>
       </div>
     </div>
   );

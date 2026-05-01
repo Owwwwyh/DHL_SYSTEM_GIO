@@ -26,7 +26,14 @@ export async function POST(req: NextRequest) {
   await prisma.rawInput.update({ where: { id: rawInputId }, data: { status: "processing" } });
 
   const session = isUiPath ? null : await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string })?.id;
+  const sessionUserId = (session?.user as { id?: string })?.id;
+  // Defensive: if the JWT points to a user that no longer exists (e.g. DB was reseeded
+  // while the browser still holds an old token), drop the FK instead of crashing.
+  let userId: string | undefined;
+  if (sessionUserId) {
+    const exists = await prisma.user.findUnique({ where: { id: sessionUserId }, select: { id: true } });
+    userId = exists?.id;
+  }
 
   try {
     let processed;

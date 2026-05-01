@@ -85,6 +85,13 @@ export async function POST(req: NextRequest) {
 
   if (!type) return NextResponse.json({ error: "type is required" }, { status: 400 });
 
+  // Defensive: drop stale userId values that no longer exist (e.g. after a DB reseed)
+  let safeUserId: string | undefined;
+  if (userId) {
+    const exists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    safeUserId = exists?.id;
+  }
+
   const raw = await prisma.rawInput.create({
     data: {
       type,
@@ -92,7 +99,7 @@ export async function POST(req: NextRequest) {
       filePath,
       fileHash,
       source: isUiPath ? "uipath" : "web",
-      userId,
+      userId: safeUserId,
     },
   });
 

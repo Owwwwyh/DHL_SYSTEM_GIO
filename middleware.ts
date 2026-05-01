@@ -25,11 +25,17 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/upload",
     "/upload/:path*",
+    "/articles",
     "/articles/:path*",
+    "/review",
     "/review/:path*",
+    "/admin",
     "/admin/:path*",
+    "/profile",
     "/profile/:path*",
+    "/api-docs",
     "/api-docs/:path*",
   ],
 };
