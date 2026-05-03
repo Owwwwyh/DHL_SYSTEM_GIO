@@ -1,9 +1,11 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
-export default function ChangePasswordPage() {
+export const dynamic = "force-dynamic";
+
+function ChangePasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { update, data: session } = useSession();
@@ -137,5 +139,13 @@ export default function ChangePasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChangePasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ChangePasswordForm />
+    </Suspense>
   );
 }
