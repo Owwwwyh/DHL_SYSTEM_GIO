@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  email           String           @unique
-  name            String?
-  password        String
-  role            String           @default("editor")
-  isActive        Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  rawInputs       RawInput[]
-  articles        Article[]
-  articleVersions ArticleVersion[]
+  id               String           @id @default(cuid())
+  email            String           @unique
+  name             String?
+  password         String
+  role             String           @default("editor")
+  isActive         Boolean          @default(true)
+  mustChangePassword Boolean        @default(false)
+  createdAt        DateTime         @default(now())
+  rawInputs        RawInput[]
+  articles         Article[]
+  articleVersions  ArticleVersion[]
 }
 
 model RawInput {

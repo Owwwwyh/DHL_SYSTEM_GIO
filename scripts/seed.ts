@@ -17,17 +17,23 @@ async function ensureUser(email: string, name: string, role: string, envVar: str
   }
 
   const fromEnv = process.env[envVar];
-  const plainPwd = fromEnv && fromEnv.length >= 8 ? fromEnv : generatePassword();
+  const usedEnvVar = !!(fromEnv && fromEnv.length >= 8);
+  const plainPwd = usedEnvVar ? fromEnv! : generatePassword();
   const hashed = await bcrypt.hash(plainPwd, 10);
 
+  // Force a password change on first login when we generated a random one.
+  // When the caller pinned a password via env var (CI, deliberate dev choice)
+  // we trust them and don't force the change.
+  const mustChangePassword = !usedEnvVar;
+
   await prisma.user.create({
-    data: { email, name, password: hashed, role },
+    data: { email, name, password: hashed, role, mustChangePassword },
   });
 
-  if (fromEnv) {
+  if (usedEnvVar) {
     console.log(`   ${role.padEnd(7)} ${email.padEnd(20)} (password from $${envVar})`);
   } else {
-    console.log(`   ${role.padEnd(7)} ${email.padEnd(20)} ${plainPwd}   <-- SAVE THIS NOW`);
+    console.log(`   ${role.padEnd(7)} ${email.padEnd(20)} ${plainPwd}   <-- SAVE THIS NOW (will be required to change on first login)`);
   }
 }
 

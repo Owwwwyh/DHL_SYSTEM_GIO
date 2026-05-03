@@ -54,8 +54,10 @@ export async function POST(req: NextRequest) {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  // Admin-created users must rotate the temporary password on first login
+  // (P2-4 in IssueDoc.md). The /auth/change-password page clears the flag.
   const user = await prisma.user.create({
-    data: { email, name: name || null, password: hashedPassword, role },
+    data: { email, name: name || null, password: hashedPassword, role, mustChangePassword: true },
     select: USER_SELECT,
   });
 

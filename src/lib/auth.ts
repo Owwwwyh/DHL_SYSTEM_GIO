@@ -26,24 +26,48 @@ export const authOptions: NextAuthOptions = {
         if (!valid) return null;
         if (!user.isActive) return null;
 
-        return { id: user.id, email: user.email, name: user.name ?? "", role: user.role, isActive: user.isActive };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name ?? "",
+          role: user.role,
+          isActive: user.isActive,
+          mustChangePassword: user.mustChangePassword,
+        };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role;
         token.isActive = (user as { isActive?: boolean }).isActive;
+        token.mustChangePassword = (user as { mustChangePassword?: boolean }).mustChangePassword;
+      }
+      // After the user updates their password the client calls
+      // `update()` from next-auth's useSession; refresh the flag from DB so
+      // downstream gates re-evaluate without forcing a fresh login.
+      if (trigger === "update" && token.id) {
+        const fresh = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { mustChangePassword: true, isActive: true, role: true },
+        });
+        if (fresh) {
+          token.mustChangePassword = fresh.mustChangePassword;
+          token.isActive = fresh.isActive;
+          token.role = fresh.role;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { id?: string; role?: string; isActive?: boolean }).id = token.id as string;
-        (session.user as { id?: string; role?: string; isActive?: boolean }).role = token.role as string;
-        (session.user as { id?: string; role?: string; isActive?: boolean }).isActive = token.isActive as boolean;
+        type S = { id?: string; role?: string; isActive?: boolean; mustChangePassword?: boolean };
+        (session.user as S).id = token.id as string;
+        (session.user as S).role = token.role as string;
+        (session.user as S).isActive = token.isActive as boolean;
+        (session.user as S).mustChangePassword = token.mustChangePassword as boolean;
       }
       return session;
     },

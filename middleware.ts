@@ -11,6 +11,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // P2-4: forced password change. If the JWT carries the flag, every
+  // protected page redirects to /change-password until the user resets it.
+  // The change-password page itself is in the (auth) route group so the
+  // middleware matcher below intentionally excludes it.
+  if (token.mustChangePassword && pathname !== "/change-password") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/change-password";
+    url.searchParams.set("forced", "1");
+    if (pathname !== "/") url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
   // Admin-only routes
   if (pathname.startsWith("/admin") && token.role !== "admin") {
     const homeUrl = req.nextUrl.clone();
@@ -37,5 +49,6 @@ export const config = {
     "/profile/:path*",
     "/api-docs",
     "/api-docs/:path*",
+    "/change-password",
   ],
 };
