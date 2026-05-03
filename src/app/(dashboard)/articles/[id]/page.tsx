@@ -62,12 +62,13 @@ export default function ArticlePage() {
     setArticle(a);
     setTitle(a.title);
     setSummary(a.summary);
-    setSteps(JSON.parse(a.steps || "[]"));
-    setTags(JSON.parse(a.tags || "[]"));
-    setRelatedLinks(JSON.parse(a.relatedLinks || "[]"));
+    setSteps(a.steps ?? []);
+    setTags(a.tags ?? []);
+    setRelatedLinks(a.relatedLinks ?? []);
     setVersions(await vRes.json());
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadArticle(); }, [id]);
 
   async function save() {

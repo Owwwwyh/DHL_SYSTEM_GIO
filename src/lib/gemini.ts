@@ -1,11 +1,18 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { readFileSync } from "fs";
+import { readBinary } from "@/lib/fileParser";
+import { logger } from "@/lib/logger";
+
+const log = logger("gemini");
 
 const apiKey = process.env.GEMINI_API_KEY;
 const hasRealKey = !!apiKey && apiKey !== "your-gemini-api-key-here" && apiKey.length > 10;
 
+// Model name is configurable via GEMINI_MODEL env var; defaults to current flash model.
+// (gemini-1.5-flash was retired; the current production flash model is gemini-2.5-flash.)
+const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
 const genAI = hasRealKey ? new GoogleGenerativeAI(apiKey!) : null;
-const model = genAI ? genAI.getGenerativeModel({ model: "gemini-1.5-flash" }) : null;
+const model = genAI ? genAI.getGenerativeModel({ model: MODEL_NAME }) : null;
 
 export interface ProcessedArticle {
   title: string;
@@ -104,7 +111,10 @@ export async function processTextInput(type: string, content: string): Promise<P
       .trim();
     return JSON.parse(text) as ProcessedArticle;
   } catch (err) {
-    console.warn("[gemini] processTextInput failed, falling back to heuristic:", err instanceof Error ? err.message : err);
+    log.warn("processTextInput failed, falling back to heuristic", {
+      err: err instanceof Error ? err.message : String(err),
+      type,
+    });
     return heuristicProcess(type, content);
   }
 }
@@ -120,9 +130,9 @@ export async function processImageInput(
       additionalContext || `Screenshot uploaded: ${filePath.split(/[\\/]/).pop()}`
     );
   }
-  const imageData = readFileSync(filePath);
+  const imageData = await readBinary(filePath);
   const base64 = imageData.toString("base64");
-  const mimeType = filePath.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+  const mimeType = filePath.toLowerCase().includes(".png") ? "image/png" : "image/jpeg";
 
   const prompt = `${SYSTEM_CONTEXT}
 
@@ -152,7 +162,10 @@ Return ONLY this exact JSON (no markdown, no code fences):
       .trim();
     return JSON.parse(text) as ProcessedArticle;
   } catch (err) {
-    console.warn("[gemini] processImageInput failed, falling back to heuristic:", err instanceof Error ? err.message : err);
+    log.warn("processImageInput failed, falling back to heuristic", {
+      err: err instanceof Error ? err.message : String(err),
+      type,
+    });
     return heuristicProcess(type, additionalContext || "Screenshot");
   }
 }
@@ -161,7 +174,7 @@ export async function detectConflict(
   newTitle: string,
   newTags: string[],
   newSummary: string,
-  existingArticles: Array<{ id: string; title: string; tags: string; summary: string }>
+  existingArticles: Array<{ id: string; title: string; tags: string[]; summary: string }>
 ): Promise<{ hasConflict: boolean; note: string }> {
   if (existingArticles.length === 0 || !model) {
     return { hasConflict: false, note: "" };
@@ -170,7 +183,7 @@ export async function detectConflict(
   const articleList = existingArticles
     .slice(0, 20)
     .map((a) => {
-      const tags = JSON.parse(a.tags || "[]").join(", ");
+      const tags = (a.tags ?? []).join(", ");
       return `- "${a.title}" [tags: ${tags}]`;
     })
     .join("\n");

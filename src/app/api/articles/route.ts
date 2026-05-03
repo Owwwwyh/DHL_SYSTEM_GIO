@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -23,16 +24,34 @@ export async function GET(req: NextRequest) {
   const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get("pageSize") ?? "20")));
   const skip = (page - 1) * pageSize;
 
-  const where = {
+  // Substring tag search needs Postgres ARRAY_TO_STRING + ILIKE (Prisma's
+  // `tags: { has: q }` is exact-match only). When `q` is set we resolve
+  // matching IDs via raw SQL first, then keep the rest of the filter pipeline
+  // in regular Prisma.
+  let matchingIds: string[] | undefined;
+  if (q) {
+    const like = `%${q}%`;
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "Article"
+      WHERE "deletedAt" IS NULL
+        AND (title ILIKE ${like}
+         OR summary ILIKE ${like}
+         OR ARRAY_TO_STRING(tags, ' ') ILIKE ${like})
+    `;
+    matchingIds = rows.map((r) => r.id);
+    if (matchingIds.length === 0) {
+      return NextResponse.json({
+        articles: [],
+        pagination: { page, pageSize, total: 0, totalPages: 0, hasNext: false, hasPrev: page > 1 },
+      });
+    }
+  }
+
+  const where: Prisma.ArticleWhereInput = {
+    deletedAt: null,
+    ...(matchingIds ? { id: { in: matchingIds } } : {}),
     ...(status ? { status } : {}),
-    ...(q ? {
-      OR: [
-        { title: { contains: q } },
-        { summary: { contains: q } },
-        { tags: { contains: q } },
-      ],
-    } : {}),
-    ...(tag ? { tags: { contains: tag } } : {}),
+    ...(tag ? { tags: { has: tag } } : {}),
     ...(creator ? { userId: creator } : {}),
     ...(from || to ? {
       createdAt: {
@@ -82,9 +101,9 @@ export async function POST(req: NextRequest) {
     data: {
       title: body.title,
       summary: body.summary,
-      steps: JSON.stringify(body.steps ?? []),
-      tags: JSON.stringify(body.tags ?? []),
-      relatedLinks: JSON.stringify(body.relatedLinks ?? []),
+      steps: body.steps ?? [],
+      tags: body.tags ?? [],
+      relatedLinks: body.relatedLinks ?? [],
       sourceType: body.sourceType ?? "manual",
       status: "draft",
       userId,

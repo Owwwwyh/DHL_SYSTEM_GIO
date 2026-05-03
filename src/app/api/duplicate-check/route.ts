@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { computeHash } from "@/lib/fileParser";
+import { rateLimit } from "@/lib/rateLimit";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { scope: "duplicate-check", capacity: 60, refillPerSec: 1 });
+  if (limited) return limited;
+
   const body = await req.json();
   const { content, fileHash } = body;
 

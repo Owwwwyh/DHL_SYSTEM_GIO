@@ -9,7 +9,7 @@ interface Article {
   id: string;
   title: string;
   summary: string;
-  tags: string;
+  tags: string[];
   sourceType: string;
   status: string;
   hasConflict: boolean;
@@ -72,12 +72,13 @@ export default function ArticlesPage() {
     // Extract all unique tags from current result set
     const tags = new Set<string>();
     (data.articles as Article[]).forEach((a) => {
-      try { JSON.parse(a.tags).forEach((t: string) => tags.add(t)); } catch {}
+      (a.tags ?? []).forEach((t: string) => tags.add(t));
     });
     if (!(overrides.tag ?? tag)) setAllTags(Array.from(tags).sort());
     setLoading(false);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, []);
 
   function handleSearch(e: React.FormEvent) {
@@ -205,7 +206,7 @@ export default function ArticlesPage() {
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {articles?.map((a) => {
-              const tags: string[] = JSON.parse(a.tags || "[]");
+              const tags: string[] = a.tags ?? [];
               return (
                 <Link
                   key={a.id}

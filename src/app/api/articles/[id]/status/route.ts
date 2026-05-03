@@ -32,7 +32,7 @@ export async function POST(
   if (!status) return NextResponse.json({ error: "status required" }, { status: 400 });
 
   const article = await prisma.article.findUnique({ where: { id: params.id } });
-  if (!article) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!article || article.deletedAt) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const allowed = VALID_TRANSITIONS[article.status] ?? [];
   if (!allowed.includes(status)) {
