@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -40,9 +40,9 @@ model Article {
   id           String           @id @default(cuid())
   title        String
   summary      String
-  steps        String
-  tags         String
-  relatedLinks String           @default("[]")
+  steps        String[]
+  tags         String[]
+  relatedLinks String[]
   sourceType   String
   status       String           @default("draft")
   hasConflict  Boolean          @default(false)
@@ -54,6 +54,9 @@ model Article {
   versions     ArticleVersion[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+
+  @@index([deletedAt])
 }
 
 model ArticleVersion {
@@ -63,8 +66,8 @@ model ArticleVersion {
   status    String
   title     String?
   summary   String?
-  steps     String?
-  tags      String?
+  steps     String[]
+  tags      String[]
   action    String
   note      String?
   userId    String?

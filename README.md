@@ -49,10 +49,9 @@ npm install
 # 3. Create / migrate the SQLite database
 npx prisma db push
 
-# 4. Seed the two starter accounts
+# 4. Seed the two starter accounts (random passwords printed to stdout —
+#    save them, or set SEED_ADMIN_PASSWORD / SEED_EDITOR_PASSWORD beforehand)
 npm run seed
-#    admin@dhl.com  / admin123
-#    editor@dhl.com / editor123
 
 # 5. Run dev server
 npm run dev
@@ -156,11 +155,13 @@ ArticleVersion
 | `npm run db:studio` | Open Prisma Studio at http://localhost:5555         |
 | `npm run seed`    | Insert default `admin@dhl.com` and `editor@dhl.com`   |
 
-## Default credentials
+## Default accounts
 
-| Role   | Email             | Password   |
-|--------|-------------------|------------|
-| admin  | admin@dhl.com     | admin123   |
-| editor | editor@dhl.com    | editor123  |
+`npm run seed` provisions two users:
 
-> Change these immediately in production via the Admin panel or `scripts/seed.ts`.
+| Role   | Email             | Password                                            |
+|--------|-------------------|-----------------------------------------------------|
+| admin  | admin@dhl.com     | from `$SEED_ADMIN_PASSWORD`, else random — printed once |
+| editor | editor@dhl.com    | from `$SEED_EDITOR_PASSWORD`, else random — printed once|
+
+The seed script is idempotent: if a user already exists, its password is left alone (rotate via the Admin panel or DB). On a fresh DB, copy the printed password before the terminal scrolls away.

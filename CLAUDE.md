@@ -56,4 +56,4 @@ The `uipath/` directory holds a UiPath Studio project that hits this same API us
 
 ## Default credentials (dev only)
 
-`admin@dhl.com / admin123` and `editor@dhl.com / editor123`, created by `npm run seed`.
+`npm run seed` creates `admin@dhl.com` and `editor@dhl.com`. Passwords come from `$SEED_ADMIN_PASSWORD` / `$SEED_EDITOR_PASSWORD` if set, otherwise a random one is generated and printed once to stdout. Existing users are not touched on re-seed.

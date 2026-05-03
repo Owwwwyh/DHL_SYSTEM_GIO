@@ -24,16 +24,16 @@ export async function GET(req: NextRequest) {
     doneInputs,
     conflictArticles,
   ] = await Promise.all([
-    prisma.article.count(),
-    prisma.article.count({ where: { status: "draft" } }),
-    prisma.article.count({ where: { status: "reviewed" } }),
-    prisma.article.count({ where: { status: "published" } }),
-    prisma.article.count({ where: { status: "archived" } }),
+    prisma.article.count({ where: { deletedAt: null } }),
+    prisma.article.count({ where: { deletedAt: null, status: "draft" } }),
+    prisma.article.count({ where: { deletedAt: null, status: "reviewed" } }),
+    prisma.article.count({ where: { deletedAt: null, status: "published" } }),
+    prisma.article.count({ where: { deletedAt: null, status: "archived" } }),
     prisma.rawInput.count(),
     prisma.rawInput.count({ where: { status: "pending" } }),
     prisma.rawInput.count({ where: { status: "failed" } }),
     prisma.rawInput.count({ where: { status: "done" } }),
-    prisma.article.count({ where: { hasConflict: true, status: { not: "archived" } } }),
+    prisma.article.count({ where: { deletedAt: null, hasConflict: true, status: { not: "archived" } } }),
   ]);
 
   const recentFailures = await prisma.rawInput.findMany({

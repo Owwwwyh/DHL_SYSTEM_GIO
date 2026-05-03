@@ -7,11 +7,11 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
     include: { user: { select: { name: true, email: true } } },
   });
 
-  if (!article) notFound();
+  if (!article || article.deletedAt) notFound();
 
-  const steps: string[] = JSON.parse(article.steps || "[]");
-  const tags: string[] = JSON.parse(article.tags || "[]");
-  const relatedLinks: string[] = JSON.parse(article.relatedLinks || "[]");
+  const steps: string[] = article.steps ?? [];
+  const tags: string[] = article.tags ?? [];
+  const relatedLinks: string[] = article.relatedLinks ?? [];
 
   return (
     <html>

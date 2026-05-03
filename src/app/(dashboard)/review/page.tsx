@@ -9,8 +9,8 @@ interface Article {
   id: string;
   title: string;
   summary: string;
-  steps: string;
-  tags: string;
+  steps: string[];
+  tags: string[];
   sourceType: string;
   status: string;
   hasConflict: boolean;
@@ -43,6 +43,7 @@ export default function ReviewPage() {
     setLoading(false);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, []);
 
   async function transition(id: string, toStatus: string, note?: string) {
@@ -220,8 +221,8 @@ export default function ReviewPage() {
           )}
 
           {articles.map((a) => {
-            const tags: string[] = JSON.parse(a.tags || "[]");
-            const steps: string[] = JSON.parse(a.steps || "[]");
+            const tags: string[] = a.tags ?? [];
+            const steps: string[] = a.steps ?? [];
 
             return (
               <div

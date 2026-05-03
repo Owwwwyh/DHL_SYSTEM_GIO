@@ -28,7 +28,8 @@
       "Bash(curl -s -o /dev/null -w \"GET /login -> %{http_code}\\\\n\" http://localhost:3000/login)",
       "Bash(curl -s http://localhost:3000/login)",
       "Bash(curl -s -o /dev/null -w \"GET /upload -> %{http_code}\\\\n\" http://localhost:3000/upload)",
-      "Bash(curl -s -o /dev/null -w \"GET /api-docs -> %{http_code}\\\\n\" http://localhost:3000/api-docs)"
+      "Bash(curl -s -o /dev/null -w \"GET /api-docs -> %{http_code}\\\\n\" http://localhost:3000/api-docs)",
+      "Bash(python -m json.tool)"
     ]
   }
 }

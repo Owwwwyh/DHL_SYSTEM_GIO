@@ -20,7 +20,7 @@ export async function GET(
     include: { user: { select: { name: true, email: true } } },
   });
 
-  if (!article) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!article || article.deletedAt) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(article);
 }
 
@@ -44,16 +44,16 @@ export async function PUT(
   const body = await req.json();
 
   const current = await prisma.article.findUnique({ where: { id: params.id } });
-  if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!current || current.deletedAt) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const updated = await prisma.article.update({
     where: { id: params.id },
     data: {
       ...(body.title !== undefined && { title: body.title }),
       ...(body.summary !== undefined && { summary: body.summary }),
-      ...(body.steps !== undefined && { steps: JSON.stringify(body.steps) }),
-      ...(body.tags !== undefined && { tags: JSON.stringify(body.tags) }),
-      ...(body.relatedLinks !== undefined && { relatedLinks: JSON.stringify(body.relatedLinks) }),
+      ...(body.steps !== undefined && { steps: body.steps }),
+      ...(body.tags !== undefined && { tags: body.tags }),
+      ...(body.relatedLinks !== undefined && { relatedLinks: body.relatedLinks }),
       ...(body.status !== undefined && { status: body.status }),
     },
   });
@@ -82,12 +82,39 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { error } = await requireRole("reviewer");
+  const { error, userId: sessionUserId } = await requireRole("reviewer");
   if (error) return error;
 
   const existing = await prisma.article.findUnique({ where: { id: params.id } });
-  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!existing || existing.deletedAt) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.article.delete({ where: { id: params.id } });
+  // Soft delete: keeps the row + version history for audit. List endpoints
+  // filter on `deletedAt: null`. To restore, clear the field via DB.
+  let userId: string | undefined;
+  if (sessionUserId) {
+    const exists = await prisma.user.findUnique({ where: { id: sessionUserId }, select: { id: true } });
+    userId = exists?.id;
+  }
+
+  await prisma.$transaction([
+    prisma.article.update({
+      where: { id: params.id },
+      data: { deletedAt: new Date() },
+    }),
+    prisma.articleVersion.create({
+      data: {
+        articleId: params.id,
+        status: existing.status,
+        title: existing.title,
+        summary: existing.summary,
+        steps: existing.steps,
+        tags: existing.tags,
+        action: "deleted",
+        note: "Soft-deleted",
+        userId,
+      },
+    }),
+  ]);
+
   return NextResponse.json({ success: true });
 }

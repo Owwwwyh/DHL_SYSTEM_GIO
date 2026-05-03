@@ -39,3 +39,8 @@ next-env.d.ts
 # database
 prisma/*.db
 prisma/*.db-journal
+
+# claude code worktrees + test artifacts
+.claude/worktrees/
+/test-results/
+/playwright-report/

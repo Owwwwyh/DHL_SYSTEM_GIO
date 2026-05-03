@@ -3,8 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { processTextInput, processImageInput, detectConflict } from "@/lib/gemini";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { rateLimit } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
+
+const log = logger("api/process");
 
 export async function POST(req: NextRequest) {
+  // Process is the most expensive endpoint (LLM call). Cap tighter.
+  const limited = rateLimit(req, { scope: "process", capacity: 10, refillPerSec: 0.2 });
+  if (limited) return limited;
+
   const apiKey = req.headers.get("x-api-key");
   const isUiPath = apiKey === process.env.UIPATH_API_KEY;
 
@@ -48,8 +56,9 @@ export async function POST(req: NextRequest) {
     const existingPublished = newTagsArray.length > 0
       ? await prisma.article.findMany({
           where: {
+            deletedAt: null,
             status: "published",
-            OR: newTagsArray.slice(0, 5).map((tag) => ({ tags: { contains: tag } })),
+            tags: { hasSome: newTagsArray.slice(0, 5) },
           },
           select: { id: true, title: true, tags: true, summary: true },
           take: 20,
@@ -67,9 +76,9 @@ export async function POST(req: NextRequest) {
       data: {
         title: processed.title,
         summary: processed.summary,
-        steps: JSON.stringify(processed.steps),
-        tags: JSON.stringify(processed.tags),
-        relatedLinks: JSON.stringify(processed.relatedLinks ?? []),
+        steps: processed.steps,
+        tags: processed.tags,
+        relatedLinks: processed.relatedLinks ?? [],
         sourceType: raw.type,
         status: "draft",
         hasConflict,
@@ -99,6 +108,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ article });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
+    log.error("processing failed", { rawInputId, err: msg });
     await prisma.rawInput.update({
       where: { id: rawInputId },
       data: { status: "failed", errorMsg: msg },
