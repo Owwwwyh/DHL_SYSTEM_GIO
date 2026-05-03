@@ -44,3 +44,7 @@ prisma/*.db-journal
 .claude/worktrees/
 /test-results/
 /playwright-report/
+
+# internal docs — only README.md is published
+*.md
+!README.md
