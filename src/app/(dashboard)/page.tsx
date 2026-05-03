@@ -18,21 +18,14 @@ interface Stats {
   }[];
 }
 
-function StatCard({
-  label, value, sub, color, icon,
-}: {
-  label: string; value: number; sub?: string; color: string; icon: string;
-}) {
-  return (
-    <div className={`bg-white rounded-xl p-5 border-l-4 ${color} shadow-sm hover:shadow-md transition-shadow`}>
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-sm text-gray-500 font-medium">{label}</p>
-        <span className="text-xl">{icon}</span>
-      </div>
-      <p className="text-3xl font-bold text-gray-900">{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+function Kpi({ label, value, href }: { label: string; value: number; href?: string }) {
+  const body = (
+    <div className="bg-white rounded-lg p-5 border border-gray-200 hover:border-gray-300 transition-colors">
+      <p className="text-xs uppercase tracking-wider text-gray-500 font-medium">{label}</p>
+      <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
     </div>
   );
+  return href ? <Link href={href}>{body}</Link> : body;
 }
 
 export default function DashboardPage() {
@@ -40,135 +33,115 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetch("/api/stats")
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data && !data.error) setStats(data);
       })
       .catch(() => setStats(null));
   }, []);
 
-  const actionIcons: Record<string, string> = {
-    created: "🆕", edited: "✏️", status_changed: "🔄",
-  };
+  if (!stats) {
+    return (
+      <div className="p-8 text-gray-400 text-sm">Loading…</div>
+    );
+  }
+
+  const needsReview = stats.articles.draft;
+  const readyToPublish = stats.articles.reviewed;
+  const hasConflict = stats.articles.conflicts > 0;
+  const hasFailures = stats.recentFailures.length > 0;
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-8">
+    <div className="p-8 max-w-6xl mx-auto">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">DHL Knowledge Base — System Overview</p>
+        <p className="text-gray-500 text-sm mt-1">DHL Knowledge Base</p>
       </div>
 
-      {!stats ? (
-        <div className="flex items-center gap-2 text-gray-400">
-          <span className="animate-spin">⟳</span> Loading...
+      {/* Action banner — appears only when there's something to do */}
+      {(needsReview > 0 || readyToPublish > 0 || hasConflict) && (
+        <div className="bg-dhl-red/5 border border-dhl-red/20 rounded-lg p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
+          <div className="text-sm text-gray-800">
+            {hasConflict && (
+              <span className="font-semibold text-dhl-red">
+                {stats.articles.conflicts} conflict{stats.articles.conflicts > 1 ? "s" : ""} flagged.{" "}
+              </span>
+            )}
+            {needsReview > 0 && (
+              <span>
+                {needsReview} draft{needsReview > 1 ? "s" : ""} awaiting review.{" "}
+              </span>
+            )}
+            {readyToPublish > 0 && (
+              <span>
+                {readyToPublish} reviewed article{readyToPublish > 1 ? "s" : ""} ready to publish.
+              </span>
+            )}
+          </div>
+          <Link
+            href="/review"
+            className="bg-dhl-red text-white px-4 py-2 rounded-md font-semibold text-sm hover:bg-red-700 transition-colors whitespace-nowrap"
+          >
+            Open review queue →
+          </Link>
         </div>
-      ) : (
-        <>
-          {/* Conflict Alert */}
-          {(stats?.articles?.conflicts ?? 0) > 0 && (
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div>
-                <p className="font-semibold text-orange-800">Conflict Detected</p>
-                <p className="text-sm text-orange-600">
-                  {stats.articles.conflicts} article{stats.articles.conflicts > 1 ? "s" : ""} flagged as potentially conflicting with existing content.{" "}
-                  <Link href="/articles?status=draft" className="underline font-medium">Review now →</Link>
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Article stats */}
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Article Pipeline</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
-            <StatCard label="Total" value={stats.articles.total} color="border-gray-300" icon="📚" />
-            <StatCard label="Draft" value={stats.articles.draft} sub="Awaiting review" color="border-gray-400" icon="📝" />
-            <StatCard label="Reviewed" value={stats.articles.reviewed} sub="Ready to publish" color="border-blue-500" icon="🔍" />
-            <StatCard label="Published" value={stats.articles.published} sub="Live in KB" color="border-green-500" icon="✅" />
-            <StatCard label="Archived" value={stats.articles.archived} color="border-zinc-300" icon="🗄️" />
-          </div>
-
-          {/* Input stats */}
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Ingestion Pipeline (RPA + Web)</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-            <StatCard label="Total Ingested" value={stats.inputs.total} color="border-gray-300" icon="📥" />
-            <StatCard label="Pending" value={stats.inputs.pending} color="border-yellow-400" icon="⏳" />
-            <StatCard label="Processed" value={stats.inputs.done} color="border-green-400" icon="✔️" />
-            <StatCard label="Failed" value={stats.inputs.failed} color="border-dhl-red" icon="❌" />
-          </div>
-
-          {/* Quick actions */}
-          <div className="flex flex-wrap gap-3 mb-8">
-            <Link href="/upload" className="bg-dhl-red text-white px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors">
-              + Upload New Input
-            </Link>
-            {(stats?.articles?.reviewed ?? 0) > 0 && (
-              <Link href="/review" className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-700 transition-colors">
-                Publish {stats.articles.reviewed} reviewed article{(stats?.articles?.reviewed ?? 0) > 1 ? "s" : ""}
-              </Link>
-            )}
-            {(stats?.articles?.draft ?? 0) > 0 && (
-              <Link href="/review" className="bg-dhl-yellow text-gray-900 px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-yellow-400 transition-colors">
-                Review {stats.articles.draft} draft{(stats?.articles?.draft ?? 0) > 1 ? "s" : ""}
-              </Link>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Activity */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="font-semibold text-gray-800 mb-4">Recent Activity</h2>
-              {stats.recentActivity.length === 0 ? (
-                <p className="text-gray-400 text-sm">No activity yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {stats?.recentActivity?.map((a) => (
-                    <div key={a.id} className="flex items-start gap-3 text-sm">
-                      <span className="text-lg shrink-0">{actionIcons[a.action] ?? "•"}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-800 truncate">{a.article.title}</p>
-                        <p className="text-gray-400 text-xs">
-                          {a.user?.name ?? a.user?.email ?? "System"} · {new Date(a.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <StatusBadge status={a.status} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Recent Failures */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="font-semibold text-gray-800 mb-4">
-                {stats.recentFailures.length > 0 ? "⚠️ Recent Failures" : "System Health"}
-              </h2>
-              {stats.recentFailures.length === 0 ? (
-                <div className="text-center py-4">
-                  <span className="text-3xl">✅</span>
-                  <p className="text-gray-500 text-sm mt-2">No failures. All systems running.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {stats?.recentFailures?.map((f) => (
-                    <div key={f.id} className="bg-red-50 rounded-lg px-3 py-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-dhl-red font-semibold uppercase text-xs">{f.type}</span>
-                        <span className="text-xs text-gray-400 uppercase">{f.source}</span>
-                        <span className="ml-auto text-xs text-gray-400">
-                          {new Date(f.updatedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 mt-0.5 text-xs truncate">{f.errorMsg ?? "Unknown error"}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </>
       )}
+
+      {/* 4 KPIs only — clickable to drill down */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <Kpi label="Published" value={stats.articles.published} href="/articles?status=published" />
+        <Kpi label="In review" value={needsReview + readyToPublish} href="/review" />
+        <Kpi label="Total ingested" value={stats.inputs.total} />
+        <Kpi label="Failed inputs" value={stats.inputs.failed} />
+      </div>
+
+      {/* Primary action */}
+      <div className="mb-8">
+        <Link
+          href="/upload"
+          className="inline-block bg-dhl-red text-white px-5 py-2.5 rounded-md font-semibold text-sm hover:bg-red-700 transition-colors"
+        >
+          + Upload new input
+        </Link>
+      </div>
+
+      {/* Failures (only if any) */}
+      {hasFailures && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <h2 className="font-semibold text-red-800 text-sm mb-2">Recent failures</h2>
+          <ul className="space-y-1">
+            {stats.recentFailures.slice(0, 3).map((f) => (
+              <li key={f.id} className="text-sm text-gray-700">
+                <span className="font-mono text-xs text-red-700 mr-2">{f.type}</span>
+                {f.errorMsg ?? "Unknown error"}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Recent activity — single compact list */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="font-semibold text-gray-800 text-sm mb-4">Recent activity</h2>
+        {stats.recentActivity.length === 0 ? (
+          <p className="text-gray-400 text-sm">No activity yet.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {stats.recentActivity.slice(0, 5).map((a) => (
+              <li key={a.id} className="flex items-center justify-between py-3 text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-800 truncate">{a.article.title}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">
+                    {a.action.replace("_", " ")} by {a.user?.name ?? a.user?.email ?? "system"} ·{" "}
+                    {new Date(a.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <StatusBadge status={a.status} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
