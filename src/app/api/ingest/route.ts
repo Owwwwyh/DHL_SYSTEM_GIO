@@ -70,11 +70,11 @@ export async function POST(req: NextRequest) {
         const buffer = Buffer.from(bytes);
 
         const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-        if (ext === "pdf" || ext === "docx" || ext === "doc") {
+        if (ext === "pdf" || ext === "docx" || ext === "doc" || ext === "msg") {
           const extracted = await extractTextFromFile(buffer, file.name);
           content = extracted.text;
           fileHash = extracted.hash;
-          type = ext === "pdf" ? "pdf" : "docx";
+          type = ext === "pdf" ? "pdf" : ext === "msg" ? "email" : "docx";
         } else {
           fileHash = computeFileHash(buffer);
           filePath = await uploadBinary(buffer, file.name, file.type || undefined);

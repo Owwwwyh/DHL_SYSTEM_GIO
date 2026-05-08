@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 const INPUT_TYPES = [
-  { value: "email",      label: "Email Thread",       icon: "📧", accept: ".txt,.eml" },
+  { value: "email",      label: "Email Thread",       icon: "📧", accept: ".txt,.eml,.msg" },
   { value: "chat",       label: "Chat / Teams",        icon: "💬", accept: ".txt" },
   { value: "screenshot", label: "Screenshot",          icon: "🖼️", accept: "image/*" },
   { value: "pdf",        label: "PDF Document",        icon: "📄", accept: ".pdf" },
@@ -24,8 +24,8 @@ export default function UploadPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const currentType = INPUT_TYPES.find((t) => t.value === type)!;
-  const isFileType = ["screenshot", "pdf", "docx"].includes(type);
-  const needsText = !isFileType || type === "screenshot";
+  const isFileType = ["screenshot", "pdf", "docx", "email"].includes(type);
+  const needsText = !isFileType || type === "screenshot" || type === "email";
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -267,7 +267,7 @@ export default function UploadPage() {
               <li className="flex justify-between"><span>📄 PDF</span><span className="text-gray-400 text-xs">.pdf</span></li>
               <li className="flex justify-between"><span>📝 Word</span><span className="text-gray-400 text-xs">.docx, .doc</span></li>
               <li className="flex justify-between"><span>🖼️ Screenshot</span><span className="text-gray-400 text-xs">.png, .jpg</span></li>
-              <li className="flex justify-between"><span>📧 Email</span><span className="text-gray-400 text-xs">.txt, .eml</span></li>
+              <li className="flex justify-between"><span>📧 Email</span><span className="text-gray-400 text-xs">.txt, .eml, .msg</span></li>
               <li className="flex justify-between"><span>💬 Chat</span><span className="text-gray-400 text-xs">.txt</span></li>
               <li className="flex justify-between"><span>📊 Slides</span><span className="text-gray-400 text-xs">.txt, .pptx</span></li>
             </ul>

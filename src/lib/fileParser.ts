@@ -20,6 +20,24 @@ export async function extractDocxText(buffer: Buffer): Promise<string> {
   return result.value.trim();
 }
 
+export async function extractMsgText(buffer: Buffer): Promise<string> {
+  const MsgReader = (await import("@kenjiuno/msgreader")).default;
+  const reader = new MsgReader(buffer);
+  const info = reader.getFileData();
+  const parts = [
+    info.subject ? `Subject: ${info.subject}` : "",
+    info.senderName || info.senderEmail
+      ? `From: ${info.senderName ?? ""} <${info.senderEmail ?? ""}>`
+      : "",
+    info.recipients?.length
+      ? `To: ${info.recipients.map((r: { name?: string; email?: string }) => r.name ?? r.email).join(", ")}`
+      : "",
+    "",
+    info.body ?? "",
+  ].filter(Boolean);
+  return parts.join("\n").trim();
+}
+
 export async function extractTextFromFile(
   buffer: Buffer,
   filename: string
@@ -31,6 +49,8 @@ export async function extractTextFromFile(
     text = await extractPdfText(buffer);
   } else if (ext === "docx" || ext === "doc") {
     text = await extractDocxText(buffer);
+  } else if (ext === "msg") {
+    text = await extractMsgText(buffer);
   } else {
     text = buffer.toString("utf-8");
   }
@@ -60,7 +80,7 @@ export async function uploadBinary(
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const { put } = await import("@vercel/blob");
     const blob = await put(`uploads/${safeName}`, buffer, {
-      access: "public",
+      access: "private",
       contentType,
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });
