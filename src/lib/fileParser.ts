@@ -22,7 +22,11 @@ export async function extractDocxText(buffer: Buffer): Promise<string> {
 
 export async function extractMsgText(buffer: Buffer): Promise<string> {
   const MsgReader = (await import("@kenjiuno/msgreader")).default;
-  const reader = new MsgReader(buffer);
+  const arrayBuffer = buffer.buffer.slice(
+    buffer.byteOffset,
+    buffer.byteOffset + buffer.byteLength
+  ) as ArrayBuffer;
+  const reader = new MsgReader(arrayBuffer);
   const info = reader.getFileData();
   const parts = [
     info.subject ? `Subject: ${info.subject}` : "",
