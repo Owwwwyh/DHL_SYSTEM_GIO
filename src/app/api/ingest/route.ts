@@ -92,8 +92,9 @@ export async function POST(req: NextRequest) {
       fileHash = body.fileHash ?? (content ? computeHash(content) : undefined);
     }
   } catch (err) {
-    log.error("failed to parse request body", { err: err instanceof Error ? err.message : String(err) });
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    const msg = err instanceof Error ? err.message : String(err);
+    log.error("failed to parse request body", { err: msg });
+    return NextResponse.json({ error: `Invalid request body: ${msg}` }, { status: 400 });
   }
 
   if (fileHash) {
