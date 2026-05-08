@@ -60,7 +60,7 @@ Every choice is justified by what the project actually needs.
 | Authentication | **NextAuth + JWT + bcrypt** | Industry-standard credentials provider, JWT works on Vercel edge runtime, bcrypt for password hashing |
 | Styling | **Tailwind CSS** | Constraint-driven design system, DHL brand palette without bespoke CSS, no design-system bloat |
 | AI extraction | **Google Gemini 1.5 Flash** | Strong JSON-mode output, generous free tier (60 RPM, 1M tokens/day), supports images + text, regional availability matches Asia-Pacific demo audience |
-| Document parsing | **pdf-parse + mammoth** | Pure JS, no native binaries, work on Vercel functions out of the box |
+| Document parsing | **pdf-parse + mammoth + @kenjiuno/msgreader** | Pure JS, no native binaries; cover PDF, DOCX, and Outlook `.msg` files on Vercel functions out of the box |
 | File storage | **Vercel Blob** (prod) / local FS (dev) | Auto-fallback so dev still works without a token; Blob is co-located with Vercel functions for low-latency reads |
 | Email | **nodemailer v7** | Standard SMTP transport, works with any provider (Resend, SendGrid, Postmark) |
 | Hosting | **Vercel** | Auto-deploy on git push, edge-cached static assets, env-var management UI, generous free tier for hackathons |
@@ -120,7 +120,7 @@ Every choice is justified by what the project actually needs.
 | **Authentication** | Email + password (bcrypt), JWT sessions via NextAuth, `x-api-key` header for RPA |
 | **RBAC** | Hierarchical roles: `editor` < `reviewer` < `admin`; enforced in `src/lib/rbac.ts:requireRole()`; middleware redirects to `/login` and gates `/admin/*` |
 | **Forced first login** | Users with `mustChangePassword=true` are auto-redirected to `/change-password`; JWT refreshes in-place via `useSession().update()` |
-| **Upload console** | Text paste OR file upload (PDF, DOCX, TXT, MD, PNG, JPG); drag-and-drop; 4 MB body cap |
+| **Upload console** | Text paste OR file upload (PDF, DOCX, Outlook `.msg`, TXT, EML, MD, PNG, JPG); drag-and-drop; 4 MB body cap |
 | **Duplicate guard** | MD5 + SHA file hash; rejects anything ingested in the last 14 days |
 | **AI processing** | Gemini 1.5 Flash extracts `{title, summary, steps[], tags[], relatedLinks[]}`; heuristic fallback if `GEMINI_API_KEY` is unset |
 | **Conflict detection** | Gemini receives published article titles + tags so it can flag overlaps (`hasConflict: true` + `conflictNote`) |
