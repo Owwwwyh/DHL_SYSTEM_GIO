@@ -84,7 +84,7 @@ export async function uploadBinary(
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const { put } = await import("@vercel/blob");
     const blob = await put(`uploads/${safeName}`, buffer, {
-      access: "private",
+      access: "public",
       contentType,
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });
