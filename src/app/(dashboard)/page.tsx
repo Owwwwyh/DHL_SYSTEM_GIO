@@ -136,7 +136,13 @@ export default function DashboardPage() {
                     {new Date(a.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <StatusBadge status={a.status} />
+                {a.action === "deleted" ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600">
+                    Deleted
+                  </span>
+                ) : (
+                  <StatusBadge status={a.status} />
+                )}
               </li>
             ))}
           </ul>
