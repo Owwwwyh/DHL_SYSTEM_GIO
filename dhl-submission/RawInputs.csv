@@ -1,0 +1,517 @@
+id,type,content,filePath,fileHash,status,errorMsg,source,userId,createdAt,updatedAt
+cmopcatc10000m27b5yvnzh3o,note,How to scan a parcel: 1. Open the scanner app. 2. Aim at the barcode. 3. Confirm the beep. 4. Place the parcel on the conveyor.,,250cbc156dcf3961f460adf535cdef4d,done,,web,,2026-05-03T05:38:20.545Z,2026-05-03T05:38:25.728Z
+cmopcbytq0005m27bnnmwrvp6,note,Test SOP e2e-1777786753870-0skh2e46yh3: 1. Open the scanner app. 2. Aim at the barcode. 3. Confirm the beep. 4. Place the parcel on the conveyor.,,bf7f96b88670dec1aed1db02e22c2f5f,done,,web,,2026-05-03T05:39:14.318Z,2026-05-03T05:39:19.258Z
+cmopw7gnb000013y46u02z7eq,chat,"[10:14 AM] John (Driver): Hey dispatch, my scanner is freezing again when I try to scan oversized items at the drop-off point. Giving me ""Error 404-X"".
+[10:16 AM] Sarah (Dispatch): Hey John, IT knows about this. Until the patch tomorrow, don't use the quick-scan button for oversized.
+[10:17 AM] Sarah (Dispatch): You need to manually select ""Oversized Load"" from the dropdown menu first, THEN scan the barcode. If it still freezes, force close the app, clear the cache in Android settings, and log back in.
+[10:18 AM] John (Driver): Ah okay, selecting from dropdown first worked. Thanks!",,daea3807f4d504eff1f74b191a40babd,done,,web,,2026-05-03T14:55:36.454Z,2026-05-03T14:55:42.774Z
+cmopwe1xt000513y4v01wvidq,screenshot,,public\uploads\1777820443540-ag95fbz4vu9-Screenshot_2026-05-03_230025.png,fa06b1d0ed1fef9be587f3ac97a21a7c,done,,web,,2026-05-03T15:00:43.985Z,2026-05-03T15:00:53.985Z
+cmotoukcv0000cze48zwpdhvt,chat,"[11:02] Raj (Sorting Line B): Guys, belt 4 has a leaking box. Smells like bleach or cleaning chemicals. 
+[11:03] Sarah (Ops Manager): Did someone hit the E-Stop yet?! 
+[11:03] Raj (Sorting Line B): Yes, belt is stopped. But it's dripping on the floor. What's the protocol for chemical liquids? Do I just mop it?
+[11:05] Sarah (Ops Manager): NO. Do not touch it with a normal mop. 
+[11:06] Sarah (Ops Manager): 1. Keep everyone at least 3 meters away. 
+[11:06] Sarah (Ops Manager): 2. Go to Pillar G and grab the Yellow Spill Kit. 
+[11:07] Sarah (Ops Manager): 3. You MUST put on the nitrile gloves and goggles from the kit before doing anything else. 
+[11:08] Sarah (Ops Manager): 4. Pour the absorbent granules over the spill, wait exactly 5 minutes for it to clump, then sweep it into the red hazmat bin. 
+[11:09] Sarah (Ops Manager): Once it's cleaned, call EHS on speed dial 3 to report it.
+[11:10] Raj (Sorting Line B): Copy that. Getting the kit now.",,51617d6fbb3c5a99825fad92216f8d31,done,,web,,2026-05-06T06:40:42.128Z,2026-05-06T06:40:52.006Z
+cmowgadws0000hjet8zclsr4n,chat,"Customer address invalid.
+Team chat says postcode missing.
+Fix:
+Add postcode manually,
+Revalidate address,
+Save and continue booking.",,107d7dc6994e897f238e9d963b2ff0a9,done,,web,,2026-05-08T05:04:22.252Z,2026-05-08T05:04:35.186Z
+cmowgf3i400004dfebz3i758d,docx,"Customer Credit Approval and New Customer Onboarding Process
+
+Document Status: Draft (Unstandardized)Business Unit: DHL Logistics OperationsProcess Owner: Operations & FinanceLast Updated: Not maintained consistently
+
+
+
+1. Purpose
+
+The purpose of this Standard Operating Procedure (SOP) is to document the end-to-end process for new customer onboarding with credit approval in DHL Logistics Operations. This SOP aims to explain how new customers are set up in operational and financial systems, how credit checks are conducted, and how approvals or rejections are handled.
+
+Currently, this process is handled through a mix of emails, spreadsheets, informal instructions, and experience-based knowledge. This document consolidates existing practices but has not been fully standardized. The intention is to later refine this SOP into a clean and official knowledge article.
+
+
+
+2. Scope
+
+This SOP applies to:
+
+Operations teams
+
+Customer Service teams
+
+Finance and Credit Control teams
+
+Supervisors and Managers involved in customer onboarding
+
+This SOP covers:
+
+New customer request intake
+
+Credit evaluation and approval
+
+System setup
+
+Communication with stakeholders
+
+It does not cover customer contract negotiation or legal agreement signing.
+
+
+
+3. Definitions and Abbreviations
+
+CRM – Customer Relationship Management system
+
+SAP – Enterprise Resource Planning system used for billing and finance
+
+Credit Limit – Maximum allowed outstanding amount for a customer
+
+Cash Customer – Customer required to prepay before shipment
+
+Credit Customer – Customer allowed to ship and pay later based on approved credit terms
+
+
+
+4. Roles and Responsibilities
+
+4.1 Sales Team
+
+Submit new customer onboarding request
+
+Provide complete customer information
+
+Support clarifications during credit review
+
+4.2 Operations Team
+
+Validate onboarding request completeness
+
+Coordinate with Finance for system setup
+
+Ensure customer is ready for operational use
+
+4.3 Finance / Credit Control Team
+
+Perform credit checks
+
+Approve or reject credit requests
+
+Set credit terms and limits in SAP
+
+4.4 Management
+
+Approve exceptional cases
+
+Resolve escalations and delays
+
+
+
+5. Process Overview
+
+The new customer onboarding and credit approval process consists of the following high-level steps:
+
+New customer request received
+
+Initial validation of request
+
+Credit evaluation
+
+Approval or rejection decision
+
+System setup
+
+Confirmation to stakeholders
+
+Delays frequently occur due to incomplete information, unclear ownership, or delayed approvals.
+
+
+
+6. Detailed Process Steps
+
+
+
+6.1 New Customer Request Submission
+
+New customer onboarding requests are typically initiated by the Sales team. Requests are submitted through email or shared templates. There is no single standardized form currently used across all regions.
+
+Minimum information required includes:
+
+Legal company name
+
+Company registration number
+
+Billing address
+
+Operational address (if different)
+
+Estimated monthly volume
+
+Requested credit limit
+
+Requested payment terms (e.g., 30 days)
+
+Some requests arrive with missing or inconsistent information, which causes delays.
+
+
+
+6.2 Initial Validation by Operations
+
+Upon receiving the request, Operations performs a basic validation to ensure that all required information is provided. This step is usually done manually by checking emails and attachments.
+
+Common issues found during this stage:
+
+Missing registration documents
+
+Incomplete billing address
+
+No estimated shipment volume provided
+
+Unclear payment terms
+
+When information is missing, Operations contacts Sales for clarification. This back-and-forth often happens over multiple emails.
+
+
+
+6.3 Credit Evaluation by Finance
+
+Once the request is validated, it is forwarded to the Finance or Credit Control team for evaluation. The credit evaluation process may include:
+
+Internal credit history check (if existing customer in other countries)
+
+External credit bureau checks
+
+Assessment of requested credit limit versus shipment volume
+
+Review of financial documents
+
+Based on the evaluation, Finance decides whether the customer should be:
+
+Approved as a credit customer
+
+Approved with a lower credit limit
+
+Approved as cash-only
+
+Rejected
+
+This decision-making process is not always documented clearly.
+
+
+
+6.4 Approval Scenarios
+
+6.4.1 Credit Approved as Requested
+
+If the credit request is approved:
+
+Finance confirms the approved credit limit and payment terms
+
+Details are shared with Operations
+
+System setup can begin
+
+6.4.2 Credit Approved with Conditions
+
+Sometimes credit is approved with conditions such as:
+
+Reduced credit limit
+
+Shorter payment terms
+
+Partial prepaid requirement
+
+These conditions are communicated via email but not always captured in a structured format.
+
+6.4.3 Credit Rejected
+
+If credit is rejected:
+
+Customer may be offered cash-only terms
+
+Sales is informed to manage customer expectations
+
+Request may be closed or reworked
+
+
+
+6.5 System Setup
+
+After credit approval, the Operations and Finance teams proceed with system setup.
+
+Typical system activities include:
+
+Creating customer record in CRM
+
+Creating customer master data in SAP
+
+Assigning billing and operational roles
+
+Configuring tax and invoicing parameters
+
+System setup errors are common due to manual data entry.
+
+
+
+6.6 Common System Setup Issues
+
+Frequently observed issues include:
+
+Duplicate customer records
+
+Incorrect billing currency
+
+Wrong tax code assigned
+
+Credit limit mismatch between email approval and SAP setup
+
+When issues occur, tickets are raised to IT or Finance, causing delays.
+
+
+
+6.7 Confirmation to Stakeholders
+
+Once setup is completed:
+
+Operations confirms readiness for shipment processing
+
+Sales is informed that the customer is live
+
+Finance monitors the first few invoices closely
+
+There is no standardized checklist to confirm all steps are completed before go-live.
+
+
+
+7. Exception Handling and Escalations
+
+7.1 Delayed Credit Approval
+
+If credit approval takes more than 5 working days:
+
+Operations escalates to Finance Manager
+
+Sales may request temporary cash terms to start operations
+
+
+
+7.2 Urgent Customer Go-Live Requests
+
+In some cases, urgent onboarding is required. Temporary workarounds include:
+
+Cash-only setup
+
+Manual billing
+
+Later credit conversion
+
+These practices increase operational risk.
+
+
+
+8. Risks and Known Gaps
+
+The following issues have been identified:
+
+Heavy manual processing
+
+Lack of standardized forms
+
+No centralized tracking
+
+Dependency on email communication
+
+Limited audit trail
+
+New joiners often struggle to understand the process due to lack of clear documentation.
+
+
+
+9. Compliance and Audit Considerations
+
+Improper customer setup can lead to:
+
+Revenue leakage
+
+Bad debt exposure
+
+Compliance violations
+
+Audit findings
+
+Finance periodically reviews customer credit exposure, but corrections are reactive rather than preventive.
+
+
+
+10. Training and Knowledge Sharing
+
+Currently, training is conducted informally through:
+
+Shadowing experienced staff
+
+Email instructions
+
+Chat-based guidance
+
+This SOP is intended to evolve into a proper training reference.
+
+
+
+11. Summary
+
+This SOP documents the current-state process for customer credit approval and onboarding. While it captures real operational practices, it lacks standardization, structure, and automation. The content should be transformed into a cleaner SOP, simplified checklist, and searchable Knowledge Base articles.",,5e3d6ad8fe3d6e35e40743f89ca12d62,done,,web,,2026-05-08T05:08:02.045Z,2026-05-08T05:08:19.346Z
+cmowgj26z00014dfe5eso5zq2,chat,"POD upload failed again 😓
+Error msg: “File size too large”
+Just compress the image before uploading.
+JPEG works better than PNG.
+After upload, refresh screen twice.",,9518109ccf5fece0e222ae08f51d5f1f,done,,web,,2026-05-08T05:11:06.971Z,2026-05-08T05:11:18.041Z
+cmowgk3h100024dfeqt8gzyh8,chat,"New staff setup steps:
+✔ Create AD account
+✔ Give email access
+✔ SAP + CW1 role
+✔ Share SOP folder
+Delay usually because SAP request not approved",,e7ef88c7266c1d0e37a94a923707a4bb,done,,web,,2026-05-08T05:11:55.285Z,2026-05-08T05:12:02.940Z
+cmowgkvsi00034dfeip5oz8bb,chat,"Label not printing properly.
+Usually printer cache issue.
+Restart printer service,
+Clear queue,
+Reprint label.
+If still blur, change toner.",,f476c2415b1ad81bff8ffdb4b9eda739,done,,web,,2026-05-08T05:12:31.986Z,2026-05-08T05:12:41.207Z
+cmowglnjd00044dfe6r77tnvq,chat,"Error Code: AUTH_401
+User not authorized to access module.
+Resolution:
+- Check AD group access
+- User must be in OPS_FWD_ROLE
+- Logout and login again",,2876dddb201d20b42b09dbea54842444,done,,web,,2026-05-08T05:13:07.946Z,2026-05-08T05:13:15.888Z
+cmowhe7kp000077o3295bc3gg,screenshot,,https://07qbdfuklbpzccw1.public.blob.vercel-storage.com/uploads/1778218516690-g6zd3or4plf-Teams_Message-5Y0Zy5aeLdyaSmhrcVM0KfOVWNBzAX.jpg,73a80d0bd23b4b5ee9a5b9888acfbd42,done,,web,,2026-05-08T05:35:20.281Z,2026-05-08T05:35:34.710Z
+cmowhpss700006jpt9ketniqp,email,"Subject: RE: Invoice mismatch issue
+From: Sivanesan Letchumanan (DHL MY) </O=EXCHANGELABS/OU=EXCHANGE ADMINISTRATIVE GROUP (FYDIBOHF23SPDLT)/CN=RECIPIENTS/CN=7E8A556436FD474FAD744927402F4765-SILETCHU>
+To: teamhelpdeskDAC@dhl.com
+Hi Team, 
+
+ 
+
+The invoice total does not match because fuel surcharge was applied twice. 
+
+ 
+
+Steps done: 
+
+1. Open invoice in SAP 
+
+2. Remove duplicated surcharge line 
+
+3. Recalculate tax 
+
+4. Save and resend to customer via email. Please remind teams not to manually add fuel surcharge. 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Thanks & Regards,
+
+Siva
+
+Team Manager - DAC
+
+DHL Global Finance Services – Asia Pacific
+
+Level 11, Imazium, No. 8, Jalan SS21/37, Damansara Uptown
+
+47400 Petaling Jaya, Selangor Darul Ehsan
+
+Malaysia
+
+Phone: +60378416499
+
+ 
+
+sivanesan.letchumanan@dhl.com <mailto:sivanesan.letchumanan@dhl.com> 
+
+www.dhl.com <http://www.dhl.com/> 
+
+ 
+
+This message is from DHL Asia Pacific Shared Services Sdn Bhd and may contain confidential business information. It is intended solely for the use of the individual to whom it is addressed. If you are not the intended recipient please contact the sender and delete this message and any attachment from your system. Unauthorized publication, use, dissemination, forwarding, printing or copying of this email and its attachments is strictly prohibited.
+
+ 
+
+GOGREEN – Environmental protection with DHL
+
+Please consider your environmental responsibility before printing this email.",,a556b4acc4a739afcad8fb5a1f7dd189,done,,web,,2026-05-08T05:44:20.983Z,2026-05-08T05:44:29.733Z
+cmowlp8rx00008lu990bmmr3q,screenshot,,https://07qbdfuklbpzccw1.public.blob.vercel-storage.com/uploads/1778225750086-hkpowkjq56-Teams_Message_2-eLHeZJ5YLv3gv10zW6KKd7QzB5TlZY.jpg,7ca58546f0861b8cb0c24e2acfccc704,done,,web,,2026-05-08T07:35:53.518Z,2026-05-08T07:36:09.315Z
+cmowlsyre0000k9teiefg0kon,docx,"General Background
+
+In DHL Logistics Operations, shipment exceptions happen daily due to multiple reasons such as missing information, system validation failures, incorrect routing, or customer-provided errors. These exceptions are usually picked up by the operations team either through system alerts, emails, or messages from supervisors. Because different teams handle exceptions differently, the steps documented here are inconsistent and sometimes incomplete.
+
+Most of the time, agents rely on chat messages, emails, or screenshots instead of a standardized SOP. This leads to delays, repeated mistakes, and inconsistent customer communication. The notes below come from MS Teams chats, emails, informal training notes, and system error screenshots.
+
+
+
+
+
+Common Shipment Exception Types Observed
+
+Based on recent discussions and incidents, the most common shipment exception types include:
+
+Invalid routing code
+
+Missing or incorrect customer address
+
+Incorrect country or postcode mapping
+
+Weight or dimension mismatch
+
+Duplicate shipment reference
+
+System authorization errors
+
+POD upload failures
+
+Different resolutions were applied by different agents, often without proper documentation.
+
+
+
+
+
+
+
+
+
+Informal Step-by-Step Notes 
+
+When shipment exception appears, first check the exact error message.
+
+Do not immediately escalate to IT without basic checks.
+
+Verify customer address (postcode, city, country).
+
+Confirm weight and dimensions are realistic.
+
+Refresh booking screen and retry.
+
+If still failing, take screenshot and escalate.
+
+No official timeline or escalation matrix was included.
+
+
+
+Known Gaps and Issues Identified
+
+No single standardized SOP exists for shipment exceptions.
+
+Resolution steps vary by agent and team.
+
+Critical steps are hidden in chat messages and emails.
+
+New joiners rely heavily on experienced staff instead of documentation.
+
+Repeated errors occur because learnings are not captured formally.",,24f1971db65cbdc813955f7348186a66,done,,web,,2026-05-08T07:38:47.163Z,2026-05-08T07:39:04.218Z

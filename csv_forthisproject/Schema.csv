@@ -1,0 +1,46 @@
+Table,Column,Type,Notes
+User,id,String (cuid),Primary key
+User,email,String,Unique
+User,name,String?,Optional display name
+User,password,String,bcrypt hash
+User,role,String,editor | reviewer | admin
+User,isActive,Boolean,Disabled accounts cannot log in
+User,mustChangePassword,Boolean,Forces redirect to /change-password on next login
+User,createdAt,DateTime,Auto set
+RawInput,id,String (cuid),Primary key
+RawInput,type,String,email | chat | screenshot | note | pdf | docx | manual
+RawInput,content,String,Extracted text body
+RawInput,filePath,String?,Stored file path or Vercel Blob URL
+RawInput,fileHash,String?,MD5 / SHA used for duplicate detection
+RawInput,status,String,pending | done | failed
+RawInput,errorMsg,String?,Set when status = failed
+RawInput,source,String,web | uipath
+RawInput,userId,String,FK to User
+RawInput,createdAt,DateTime,Auto set
+RawInput,updatedAt,DateTime,Auto set
+Article,id,String (cuid),Primary key
+Article,title,String,Extracted by Gemini
+Article,summary,String,Extracted by Gemini
+Article,steps,String,JSON encoded array of step strings
+Article,tags,String,JSON encoded array of tag strings
+Article,relatedLinks,String,JSON encoded array of URLs
+Article,sourceType,String,Original input type
+Article,status,String,draft | reviewed | published | archived
+Article,hasConflict,Boolean,Set when Gemini detects overlap with published articles
+Article,conflictNote,String?,Human readable conflict description
+Article,rawInputId,String,FK to RawInput
+Article,userId,String,FK to User (owner)
+Article,deletedAt,DateTime?,Soft delete marker
+Article,createdAt,DateTime,Auto set
+Article,updatedAt,DateTime,Auto set
+ArticleVersion,id,String (cuid),Primary key
+ArticleVersion,articleId,String,FK to Article
+ArticleVersion,status,String,Article status at the time of this version
+ArticleVersion,title,String,Snapshot of title
+ArticleVersion,summary,String,Snapshot of summary
+ArticleVersion,steps,String,JSON snapshot
+ArticleVersion,tags,String,JSON snapshot
+ArticleVersion,action,String,created | edited | status_changed
+ArticleVersion,note,String?,Optional reviewer note
+ArticleVersion,userId,String,FK to User (who made the change)
+ArticleVersion,createdAt,DateTime,Auto set

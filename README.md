@@ -1,5 +1,9 @@
 # DHL Knowledge Base System
 
+> **For the judges**
+> - Database export (CSV per table) is in [`csv_forthisproject/`](./csv_forthisproject)
+> - Presentation slide and written report are in [`dhl-submission/`](./dhl-submission)
+
 > Production-style SOP / knowledge-base management platform for DHL warehouse operations. Same REST API serves both human users (browser) and RPA bots (UiPath). Live at **https://dhl-system-gio.vercel.app**.
 
 [![Live on Vercel](https://img.shields.io/badge/live-vercel-black)](https://dhl-system-gio.vercel.app)

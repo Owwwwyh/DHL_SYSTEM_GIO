@@ -1,0 +1,3 @@
+id,email,name,password,role,isActive,mustChangePassword,createdAt
+cmopb26zg0000wdnk6gj7h16t,admin@dhl.com,DHL Admin,$2a$10$ALc2MtJbDJzGbP98YgHMR.JhRhOVxqq0nytX3u/GmN.vkJ.ADkkeK,admin,true,false,2026-05-03T05:03:38.716Z
+cmopb27d70001wdnkjsfwbxvx,editor@dhl.com,KB Editor,$2a$10$IMtcVSo3C7Az.ubAuNRa0OaOIYc4CFIeAD.8AePjqO0.FQ5zH8GES,editor,true,false,2026-05-03T05:03:39.211Z

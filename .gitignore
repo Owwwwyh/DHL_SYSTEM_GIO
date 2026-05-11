@@ -40,8 +40,9 @@ next-env.d.ts
 prisma/*.db
 prisma/*.db-journal
 
-# claude code worktrees + test artifacts
-.claude/worktrees/
+# claude code artifacts (fully excluded)
+.claude/
+CLAUDE.md
 /test-results/
 /playwright-report/
 
