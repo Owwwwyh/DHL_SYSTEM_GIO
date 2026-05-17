@@ -1,216 +1,288 @@
-<Activity mc:Ignorable="sap sap2010" x:Class="DHL_KB_Ingestion" sap:VirtualizedContainerService.HintSize="640,720"
-  xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
-  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
-  xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
-  xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
-  xmlns:s="clr-namespace:System;assembly=mscorlib"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-
-  <!--
-    DHL Knowledge Base - UiPath RPA Ingestion Workflow
-    ==================================================
-    PURPOSE
-      Pulls new files from a designated Google Drive folder (or email inbox via
-      Outlook activities) and pushes each file into the DHL KB system through
-      the REST API. Skips items already ingested in the last 14 days.
-
-    FLOW DIAGRAM (described in XML)
-      [START]
-        |
-        v
-      [Read API Key from asset / Orchestrator]
-        |
-        v
-      [Get files from Google Drive / Outlook attachments]   <-- INPUT BRANCH
-        |
-        v
-      For Each file:
-        |
-        v
-      [TRY]
-        |--> [POST /api/duplicate-check]
-        |      |--> if isDuplicate==true  --> [Log "skip"] --> next iteration
-        |      |--> else continue
-        |
-        |--> [POST /api/ingest (multipart, file attached)]
-        |      |--> capture {id}
-        |
-        |--> [POST /api/process { rawInputId: id }]
-        |      |--> capture {article.id}
-        |
-        |--> [POST /api/articles/{id}/status { status: "reviewed" }]   (optional auto-promote)
-        |
-        |--> [Log "OK" + write success log]
-        |
-      [CATCH (System.Exception ex)]
-        |--> [Take Screenshot to logs/screenshots/<timestamp>.png]
-        |--> [Log Error with stack trace]
-        |--> [Increment retry counter; retry up to N=3 with exponential backoff]
-        |--> [If retries exhausted -> append error row to logs/errors.csv]
-      [END TRY]
-        |
-        v
-      End For Each
-        |
-        v
-      [POST /api/summary-report  (sends daily admin email)]
-        |
-        v
-      [END]
-
-    INPUTS
-      in_BaseUrl     : System URL (e.g. https://kb.dhl.example.com)
-      in_ApiKey      : Same value as UIPATH_API_KEY env var on the server
-      in_SourceType  : "googledrive" | "outlook" | "folder"
-      in_SourcePath  : drive folder id, mailbox name, or local folder path
-      in_AdminEmail  : Recipient for daily summary
-
-    OUTPUTS
-      out_TotalProcessed
-      out_TotalSkipped
-      out_TotalFailed
-
-    LOGS
-      logs/run-YYYYMMDD.txt
-      logs/errors.csv
-      logs/screenshots/*.png
-
-  -->
-
+﻿<Activity mc:Ignorable="sap2010" x:Class="Main" xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation" xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib" xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=System.Private.CoreLib" xmlns:sma="clr-namespace:System.Management.Automation;assembly=System.Management.Automation" xmlns:this="clr-namespace:" xmlns:ui="http://schemas.uipath.com/workflow/activities" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <x:Members>
-    <x:Property Name="in_BaseUrl"    Type="InArgument(x:String)" />
-    <x:Property Name="in_ApiKey"     Type="InArgument(x:String)" />
-    <x:Property Name="in_SourceType" Type="InArgument(x:String)" />
-    <x:Property Name="in_SourcePath" Type="InArgument(x:String)" />
-    <x:Property Name="in_AdminEmail" Type="InArgument(x:String)" />
-    <x:Property Name="out_TotalProcessed" Type="OutArgument(x:Int32)" />
-    <x:Property Name="out_TotalSkipped"   Type="OutArgument(x:Int32)" />
-    <x:Property Name="out_TotalFailed"    Type="OutArgument(x:Int32)" />
+    <x:Property Name="UiPathEventConnector" Type="InArgument(x:String)" />
+    <x:Property Name="UiPathEvent" Type="InArgument(x:String)" />
+    <x:Property Name="UiPathEventObjectType" Type="InArgument(x:String)" />
+    <x:Property Name="UiPathEventObjectId" Type="InArgument(x:String)" />
+    <x:Property Name="UiPathAdditionalEventData" Type="InArgument(x:String)" />
   </x:Members>
-
-  <Sequence DisplayName="DHL KB Ingestion - Main">
+  <this:Main.UiPathEventConnector>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.UiPathEventConnector>
+  <this:Main.UiPathEvent>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.UiPathEvent>
+  <this:Main.UiPathEventObjectType>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.UiPathEventObjectType>
+  <this:Main.UiPathEventObjectId>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.UiPathEventObjectId>
+  <this:Main.UiPathAdditionalEventData>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.UiPathAdditionalEventData>
+  <sap2010:WorkflowViewState.IdRef>Main_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <sco:Collection x:TypeArguments="x:String">
+      <x:String>GlobalConstantsNamespace</x:String>
+      <x:String>GlobalVariablesNamespace</x:String>
+      <x:String>System</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Collections.ObjectModel</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>UiPath.Core</x:String>
+      <x:String>UiPath.Core.Activities</x:String>
+      <x:String>System.Collections</x:String>
+      <x:String>System.Data</x:String>
+      <x:String>System.IO</x:String>
+      <x:String>Microsoft.VisualBasic.CompilerServices</x:String>
+      <x:String>Microsoft</x:String>
+      <x:String>Microsoft.Win32.SafeHandles</x:String>
+      <x:String>System.Numerics</x:String>
+      <x:String>System.Net</x:String>
+      <x:String>System.Globalization</x:String>
+      <x:String>System.Configuration.Assemblies</x:String>
+      <x:String>System.ComponentModel</x:String>
+      <x:String>System.CodeDom.Compiler</x:String>
+      <x:String>System.Buffers</x:String>
+      <x:String>System.Buffers.Text</x:String>
+      <x:String>System.Buffers.Binary</x:String>
+      <x:String>System.Threading</x:String>
+      <x:String>System.Threading.Tasks</x:String>
+      <x:String>System.Threading.Tasks.Sources</x:String>
+      <x:String>System.Text</x:String>
+      <x:String>System.Text.Unicode</x:String>
+      <x:String>System.Security</x:String>
+      <x:String>System.Security.Principal</x:String>
+      <x:String>System.Security.Permissions</x:String>
+      <x:String>System.Security.Cryptography</x:String>
+      <x:String>System.Runtime</x:String>
+      <x:String>System.Runtime.Serialization</x:String>
+      <x:String>System.Runtime.Remoting</x:String>
+      <x:String>System.Runtime.ExceptionServices</x:String>
+      <x:String>System.Runtime.ConstrainedExecution</x:String>
+      <x:String>System.Runtime.Versioning</x:String>
+      <x:String>System.Runtime.Loader</x:String>
+      <x:String>System.Runtime.Intrinsics</x:String>
+      <x:String>System.Runtime.Intrinsics.Wasm</x:String>
+      <x:String>System.Runtime.Intrinsics.Arm</x:String>
+      <x:String>System.Runtime.Intrinsics.X86</x:String>
+      <x:String>System.Runtime.InteropServices</x:String>
+      <x:String>System.Runtime.InteropServices.ObjectiveC</x:String>
+      <x:String>System.Runtime.InteropServices.Marshalling</x:String>
+      <x:String>System.Runtime.InteropServices.ComTypes</x:String>
+      <x:String>System.Runtime.CompilerServices</x:String>
+      <x:String>System.Resources</x:String>
+      <x:String>System.Reflection</x:String>
+      <x:String>System.Reflection.Metadata</x:String>
+      <x:String>System.Reflection.Emit</x:String>
+      <x:String>System.IO.Enumeration</x:String>
+      <x:String>System.Diagnostics</x:String>
+      <x:String>System.Diagnostics.SymbolStore</x:String>
+      <x:String>System.Diagnostics.Contracts</x:String>
+      <x:String>System.Diagnostics.CodeAnalysis</x:String>
+      <x:String>System.Diagnostics.Tracing</x:String>
+      <x:String>System.Collections.Concurrent</x:String>
+      <x:String>Internal</x:String>
+      <x:String>System.CodeDom</x:String>
+      <x:String>Microsoft.VisualBasic</x:String>
+      <x:String>Microsoft.CSharp</x:String>
+      <x:String>System.Linq.Expressions</x:String>
+      <x:String>System.Linq.Expressions.Interpreter</x:String>
+      <x:String>System.Dynamic</x:String>
+      <x:String>UiPath.Workflow.Runtime</x:String>
+      <x:String>System.Activities</x:String>
+      <x:String>System.Activities.XamlIntegration</x:String>
+      <x:String>System.Activities.Validation</x:String>
+      <x:String>System.Activities.Tracking</x:String>
+      <x:String>System.Activities.Statements</x:String>
+      <x:String>System.Activities.Statements.Tracking</x:String>
+      <x:String>System.Activities.Runtime</x:String>
+      <x:String>System.Activities.Runtime.DurableInstancing</x:String>
+      <x:String>System.Activities.Runtime.Collections</x:String>
+      <x:String>System.Activities.ParallelTracking</x:String>
+      <x:String>System.Activities.Hosting</x:String>
+      <x:String>System.Activities.Expressions</x:String>
+      <x:String>System.Activities.Persistence</x:String>
+      <x:String>System.Activities.DurableInstancing</x:String>
+      <x:String>System.ComponentModel.Design.Serialization</x:String>
+      <x:String>System.Text.RegularExpressions</x:String>
+      <x:String>System.Security.Authentication.ExtendedProtection</x:String>
+      <x:String>System.Drawing</x:String>
+      <x:String>System.Timers</x:String>
+      <x:String>System.ComponentModel.Design</x:String>
+      <x:String>System.Xml</x:String>
+      <x:String>System.Xml.Schema</x:String>
+      <x:String>System.Xml.Xsl</x:String>
+      <x:String>System.Xml.Xsl.Runtime</x:String>
+      <x:String>System.Xml.XPath</x:String>
+      <x:String>System.Xml.Resolvers</x:String>
+      <x:String>System.Xml.Serialization</x:String>
+      <x:String>Microsoft.CodeAnalysis</x:String>
+      <x:String>Microsoft.CodeAnalysis.FlowAnalysis</x:String>
+      <x:String>Microsoft.CodeAnalysis.Text</x:String>
+      <x:String>Microsoft.CodeAnalysis.Diagnostics</x:String>
+      <x:String>Microsoft.CodeAnalysis.Diagnostics.Telemetry</x:String>
+      <x:String>Microsoft.CodeAnalysis.Operations</x:String>
+      <x:String>Microsoft.CodeAnalysis.Emit</x:String>
+      <x:String>Microsoft.CodeAnalysis.VisualBasic</x:String>
+      <x:String>Microsoft.CodeAnalysis.VisualBasic.Syntax</x:String>
+      <x:String>Microsoft.VisualBasic.FileIO</x:String>
+      <x:String>System.Security.Authentication</x:String>
+      <x:String>System.Net.Cache</x:String>
+      <x:String>System.Net.NetworkInformation</x:String>
+      <x:String>System.Net.Security</x:String>
+      <x:String>System.Net.Sockets</x:String>
+      <x:String>System.Management.Automation</x:String>
+      <x:String>UiPath.Shared.Activities</x:String>
+    </sco:Collection>
+  </TextExpression.NamespacesForImplementation>
+  <TextExpression.ReferencesForImplementation>
+    <sco:Collection x:TypeArguments="AssemblyReference">
+      <AssemblyReference>System.ComponentModel.TypeConverter</AssemblyReference>
+      <AssemblyReference>System.Linq</AssemblyReference>
+      <AssemblyReference>System.ObjectModel</AssemblyReference>
+      <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.Studio.Constants</AssemblyReference>
+      <AssemblyReference>System.Private.CoreLib</AssemblyReference>
+      <AssemblyReference>System.Collections</AssemblyReference>
+      <AssemblyReference>System.Collections.NonGeneric</AssemblyReference>
+      <AssemblyReference>System.Data.SqlClient</AssemblyReference>
+      <AssemblyReference>System.Data.Common</AssemblyReference>
+      <AssemblyReference>System.IO.FileSystem.Watcher</AssemblyReference>
+      <AssemblyReference>System.IO.Packaging</AssemblyReference>
+      <AssemblyReference>System.IO.FileSystem.AccessControl</AssemblyReference>
+      <AssemblyReference>System.IO.FileSystem.DriveInfo</AssemblyReference>
+      <AssemblyReference>Microsoft.VisualBasic.Forms</AssemblyReference>
+      <AssemblyReference>Microsoft.VisualBasic.Core</AssemblyReference>
+      <AssemblyReference>Microsoft.VisualStudio.Validation</AssemblyReference>
+      <AssemblyReference>System.Security.Cryptography</AssemblyReference>
+      <AssemblyReference>System.Security.Principal.Windows</AssemblyReference>
+      <AssemblyReference>System.IO.MemoryMappedFiles</AssemblyReference>
+      <AssemblyReference>System.Diagnostics.Process</AssemblyReference>
+      <AssemblyReference>Microsoft.Win32.Registry</AssemblyReference>
+      <AssemblyReference>System.IO.Pipes</AssemblyReference>
+      <AssemblyReference>System.Runtime.Numerics</AssemblyReference>
+      <AssemblyReference>System.Net.WebClient</AssemblyReference>
+      <AssemblyReference>System.Net.Primitives</AssemblyReference>
+      <AssemblyReference>System.Net.HttpListener</AssemblyReference>
+      <AssemblyReference>System.Net.WebProxy</AssemblyReference>
+      <AssemblyReference>System.Net.NameResolution</AssemblyReference>
+      <AssemblyReference>System.Net.WebHeaderCollection</AssemblyReference>
+      <AssemblyReference>System.Security.Permissions</AssemblyReference>
+      <AssemblyReference>System.Net.Requests</AssemblyReference>
+      <AssemblyReference>System.Net.ServicePoint</AssemblyReference>
+      <AssemblyReference>PresentationFramework</AssemblyReference>
+      <AssemblyReference>WindowsBase</AssemblyReference>
+      <AssemblyReference>System.ComponentModel</AssemblyReference>
+      <AssemblyReference>System.ComponentModel.EventBasedAsync</AssemblyReference>
+      <AssemblyReference>System.ComponentModel.Primitives</AssemblyReference>
+      <AssemblyReference>System.CodeDom</AssemblyReference>
+      <AssemblyReference>System.Memory</AssemblyReference>
+      <AssemblyReference>System.Threading.AccessControl</AssemblyReference>
+      <AssemblyReference>System.Threading</AssemblyReference>
+      <AssemblyReference>UiPath.Mail.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.GSuite.Activities.Design</AssemblyReference>
+      <AssemblyReference>System.Threading.Tasks.Parallel</AssemblyReference>
+      <AssemblyReference>System.Text.Encoding.CodePages</AssemblyReference>
+      <AssemblyReference>System.Text.Encodings.Web</AssemblyReference>
+      <AssemblyReference>System.Runtime.InteropServices</AssemblyReference>
+      <AssemblyReference>System.Security.Claims</AssemblyReference>
+      <AssemblyReference>System.Security.Cryptography.Pkcs</AssemblyReference>
+      <AssemblyReference>System.Security.Cryptography.ProtectedData</AssemblyReference>
+      <AssemblyReference>System.Private.ServiceModel</AssemblyReference>
+      <AssemblyReference>System.Private.DataContractSerialization</AssemblyReference>
+      <AssemblyReference>System.Runtime.Serialization.Formatters</AssemblyReference>
+      <AssemblyReference>System.Runtime.Serialization.Primitives</AssemblyReference>
+      <AssemblyReference>System.Text.Json</AssemblyReference>
+      <AssemblyReference>System.Windows.Forms.Design</AssemblyReference>
+      <AssemblyReference>System.Collections.Immutable</AssemblyReference>
+      <AssemblyReference>System.Linq.Expressions</AssemblyReference>
+      <AssemblyReference>System.Runtime.CompilerServices.VisualC</AssemblyReference>
+      <AssemblyReference>System.Windows.Forms</AssemblyReference>
+      <AssemblyReference>System.Resources.Writer</AssemblyReference>
+      <AssemblyReference>System.Reflection.DispatchProxy</AssemblyReference>
+      <AssemblyReference>System.Reflection.TypeExtensions</AssemblyReference>
+      <AssemblyReference>System.Reflection.Metadata</AssemblyReference>
+      <AssemblyReference>System.Reflection.MetadataLoadContext</AssemblyReference>
+      <AssemblyReference>Microsoft.PowerShell.Commands.Diagnostics</AssemblyReference>
+      <AssemblyReference>System.Diagnostics.PerformanceCounter</AssemblyReference>
+      <AssemblyReference>System.Diagnostics.TraceSource</AssemblyReference>
+      <AssemblyReference>System.Configuration.ConfigurationManager</AssemblyReference>
+      <AssemblyReference>System.Diagnostics.EventLog</AssemblyReference>
+      <AssemblyReference>System.Diagnostics.DiagnosticSource</AssemblyReference>
+      <AssemblyReference>System.Diagnostics.FileVersionInfo</AssemblyReference>
+      <AssemblyReference>System.Diagnostics.TextWriterTraceListener</AssemblyReference>
+      <AssemblyReference>System.Diagnostics.StackTrace</AssemblyReference>
+      <AssemblyReference>System.Collections.Concurrent</AssemblyReference>
+      <AssemblyReference>System.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.Workflow</AssemblyReference>
+      <AssemblyReference>System.Text.RegularExpressions</AssemblyReference>
+      <AssemblyReference>System.Net.Security</AssemblyReference>
+      <AssemblyReference>System.Drawing.Primitives</AssemblyReference>
+      <AssemblyReference>System.Drawing.Common</AssemblyReference>
+      <AssemblyReference>System.Private.Xml</AssemblyReference>
+      <AssemblyReference>System.Private.Xml.Linq</AssemblyReference>
+      <AssemblyReference>System.Xml.XPath.XDocument</AssemblyReference>
+      <AssemblyReference>Microsoft.CodeAnalysis</AssemblyReference>
+      <AssemblyReference>Microsoft.CodeAnalysis.CSharp</AssemblyReference>
+      <AssemblyReference>Microsoft.CodeAnalysis.VisualBasic</AssemblyReference>
+      <AssemblyReference>Microsoft.CodeAnalysis.Features</AssemblyReference>
+      <AssemblyReference>System.Net.NetworkInformation</AssemblyReference>
+      <AssemblyReference>System.Net.Ping</AssemblyReference>
+      <AssemblyReference>System.Net.Sockets</AssemblyReference>
+      <AssemblyReference>System.Management.Automation</AssemblyReference>
+      <AssemblyReference>UiPath.GSuite.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.Web.Activities</AssemblyReference>
+    </sco:Collection>
+  </TextExpression.ReferencesForImplementation>
+  <Sequence sap2010:WorkflowViewState.IdRef="Sequence_3">
     <Sequence.Variables>
-      <Variable x:TypeArguments="scg:List(s:String)" Name="files" />
-      <Variable x:TypeArguments="x:Int32" Name="processed" Default="0" />
-      <Variable x:TypeArguments="x:Int32" Name="skipped"   Default="0" />
-      <Variable x:TypeArguments="x:Int32" Name="failed"    Default="0" />
-      <Variable x:TypeArguments="x:String" Name="rawId" />
-      <Variable x:TypeArguments="x:String" Name="articleId" />
-      <Variable x:TypeArguments="x:Boolean" Name="isDup" />
+            <Variable x:TypeArguments="x:String" Name="scriptPath" />
+      <Variable x:TypeArguments="x:String" Name="psArgs" />
+      <Variable x:TypeArguments="x:String" Name="in_BaseUrl" Default="https://dhl-system-gio.vercel.app" />
+      <Variable x:TypeArguments="x:String" Name="in_ApiKey" Default="dhl-uipath-secret-2024" />
+      <Variable x:TypeArguments="x:String" Name="in_SourceType" Default="folder" />
+      <Variable x:TypeArguments="x:String" Name="in_SourcePath" Default="F:\DHL_Inbox" />
+      <Variable x:TypeArguments="x:String" Name="in_AdminEmail" Default="admin@dhl.com" />
+      <Variable x:TypeArguments="x:Int32" Name="out_ExitCode" />
     </Sequence.Variables>
-
-    <!-- 1. Initialize logs -->
-    <WriteLine DisplayName="Log: start" Text='"[INFO] DHL-KB ingestion starting at " + Now.ToString("u")' />
-
-    <!-- 2. Pull file list from chosen source (Google Drive / Outlook / folder).
-         Replace this WriteLine with the appropriate UiPath activities:
-           - GSuiteApplicationScope + ListFiles  (Google Drive)
-           - GetOutlookMailMessages + SaveAttachments (Outlook)
-           - Directory.GetFiles  (local watch folder) -->
-    <WriteLine DisplayName="TODO: enumerate source" Text='"Enumerating files from " + in_SourceType + ":" + in_SourcePath' />
-
-    <!-- 3. For each file -->
-    <ForEach x:TypeArguments="x:String" DisplayName="For Each file" Values="[files]">
-      <ActivityAction x:TypeArguments="x:String">
-        <ActivityAction.Argument>
-          <DelegateInArgument x:TypeArguments="x:String" Name="filePath" />
-        </ActivityAction.Argument>
-
-        <TryCatch DisplayName="Try / Catch per file">
-
-          <TryCatch.Try>
-            <Sequence>
-              <!-- 3a. Duplicate check -->
-              <WriteLine DisplayName="POST /api/duplicate-check"
-                Text='"[HTTP] POST " + in_BaseUrl + "/api/duplicate-check  file=" + filePath' />
-              <!-- isDup = (response.isDuplicate == true) -->
-
-              <If Condition="[isDup]">
-                <If.Then>
-                  <Sequence>
-                    <Assign DisplayName="++skipped">
-                      <Assign.To><OutArgument x:TypeArguments="x:Int32">[skipped]</OutArgument></Assign.To>
-                      <Assign.Value><InArgument x:TypeArguments="x:Int32">[skipped + 1]</InArgument></Assign.Value>
-                    </Assign>
-                    <WriteLine Text='"[SKIP] duplicate within 14 days: " + filePath' />
-                  </Sequence>
-                </If.Then>
-                <If.Else>
-                  <Sequence>
-                    <!-- 3b. Ingest -->
-                    <WriteLine DisplayName="POST /api/ingest"
-                      Text='"[HTTP] POST " + in_BaseUrl + "/api/ingest  (multipart)"' />
-                    <!-- rawId = response.id -->
-
-                    <!-- 3c. Process via Gemini AI -->
-                    <WriteLine DisplayName="POST /api/process"
-                      Text='"[HTTP] POST " + in_BaseUrl + "/api/process  body={rawInputId: " + rawId + "}"' />
-                    <!-- articleId = response.article.id -->
-
-                    <!-- 3d. Optional: auto-promote to reviewed -->
-                    <WriteLine DisplayName="POST /api/articles/:id/status"
-                      Text='"[HTTP] POST " + in_BaseUrl + "/api/articles/" + articleId + "/status  body={status: reviewed}"' />
-
-                    <Assign DisplayName="++processed">
-                      <Assign.To><OutArgument x:TypeArguments="x:Int32">[processed]</OutArgument></Assign.To>
-                      <Assign.Value><InArgument x:TypeArguments="x:Int32">[processed + 1]</InArgument></Assign.Value>
-                    </Assign>
-                    <WriteLine Text='"[OK] " + filePath + " -> article " + articleId' />
-                  </Sequence>
-                </If.Else>
-              </If>
-            </Sequence>
-          </TryCatch.Try>
-
-          <TryCatch.Catches>
-            <Catch x:TypeArguments="s:Exception" DisplayName="Catch System.Exception">
-              <ActivityAction x:TypeArguments="s:Exception">
-                <ActivityAction.Argument>
-                  <DelegateInArgument x:TypeArguments="s:Exception" Name="ex" />
-                </ActivityAction.Argument>
-                <Sequence>
-                  <!-- 3e. Capture screenshot on failure -->
-                  <WriteLine DisplayName="Take Screenshot"
-                    Text='"[SCREENSHOT] saved to logs/screenshots/" + Now.ToString("yyyyMMdd_HHmmssfff") + ".png"' />
-                  <!-- Replace with TakeScreenshot + SaveImage activity -->
-
-                  <Assign DisplayName="++failed">
-                    <Assign.To><OutArgument x:TypeArguments="x:Int32">[failed]</OutArgument></Assign.To>
-                    <Assign.Value><InArgument x:TypeArguments="x:Int32">[failed + 1]</InArgument></Assign.Value>
-                  </Assign>
-                  <WriteLine Text='"[ERROR] " + filePath + " -> " + ex.Message' />
-
-                  <!-- 3f. Retry policy (UiPath Retry Scope) handled at parent level
-                       by wrapping the Try block in <RetryScope> with NumberOfRetries=3 -->
-                </Sequence>
-              </ActivityAction>
-            </Catch>
-          </TryCatch.Catches>
-
-        </TryCatch>
-      </ActivityAction>
-    </ForEach>
-
-    <!-- 4. Send daily summary email to admin -->
-    <WriteLine DisplayName="POST /api/summary-report"
-      Text='"[HTTP] POST " + in_BaseUrl + "/api/summary-report  body={adminEmail: " + in_AdminEmail + "}"' />
-
-    <!-- 5. Return totals -->
-    <Assign>
-      <Assign.To><OutArgument x:TypeArguments="x:Int32">[out_TotalProcessed]</OutArgument></Assign.To>
-      <Assign.Value><InArgument x:TypeArguments="x:Int32">[processed]</InArgument></Assign.Value>
-    </Assign>
-    <Assign>
-      <Assign.To><OutArgument x:TypeArguments="x:Int32">[out_TotalSkipped]</OutArgument></Assign.To>
-      <Assign.Value><InArgument x:TypeArguments="x:Int32">[skipped]</InArgument></Assign.Value>
-    </Assign>
-    <Assign>
-      <Assign.To><OutArgument x:TypeArguments="x:Int32">[out_TotalFailed]</OutArgument></Assign.To>
-      <Assign.Value><InArgument x:TypeArguments="x:Int32">[failed]</InArgument></Assign.Value>
-    </Assign>
-
-    <WriteLine DisplayName="Log: end"
-      Text='"[INFO] Done. processed=" + processed.ToString() + " skipped=" + skipped.ToString() + " failed=" + failed.ToString()' />
+    <ui:ManualTrigger Result="{x:Null}" DisplayName="Manual Trigger" sap2010:WorkflowViewState.IdRef="ManualTrigger_1" />
+    <Sequence DisplayName="DHL KB Ingestion" sap2010:WorkflowViewState.IdRef="Sequence_2">
+      <Assign DisplayName="Assign the full path of the PowerShell script to the scriptPath variable." sap2010:WorkflowViewState.IdRef="Assign_1">
+        <Assign.To>
+          <OutArgument x:TypeArguments="x:String">[scriptPath]</OutArgument>
+        </Assign.To>
+        <Assign.Value>
+          <InArgument x:TypeArguments="x:String">[Path.Combine(Environment.CurrentDirectory, "Run-Bot.ps1")]</InArgument>
+        </Assign.Value>
+      </Assign>
+      <Assign DisplayName="Construct the arguments string for the PowerShell script." sap2010:WorkflowViewState.IdRef="Assign_2">
+        <Assign.To>
+          <OutArgument x:TypeArguments="x:String">[psArgs]</OutArgument>
+        </Assign.To>
+        <Assign.Value>
+          <InArgument x:TypeArguments="x:String">["-NoProfile -ExecutionPolicy Bypass -File """ &amp; scriptPath &amp; """ -InboxPath """ &amp; in_SourcePath &amp; """ -BaseUrl """ &amp; in_BaseUrl &amp; """ -ApiKey """ &amp; in_ApiKey &amp; """ -AdminEmail """ &amp; in_AdminEmail &amp; """"]</InArgument>
+        </Assign.Value>
+      </Assign>
+      <ui:LogMessage DisplayName="Log the PowerShell command and arguments that will be executed." sap2010:WorkflowViewState.IdRef="LogMessage_1" Level="Info" Message="[&quot;Launching: &quot; &amp; psArgs]" />
+      <ui:InvokePowerShell x:TypeArguments="x:Object" DisplayName="Run PowerShell Script" sap2010:WorkflowViewState.IdRef="InvokePowerShell_1" IsScript="True" CommandText="[&quot;Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; &amp; &apos;&quot; &amp; scriptPath &amp; &quot;&apos; -InboxPath &apos;&quot; &amp; in_SourcePath &amp; &quot;&apos; -BaseUrl &apos;&quot; &amp; in_BaseUrl &amp; &quot;&apos; -ApiKey &apos;&quot; &amp; in_ApiKey &amp; &quot;&apos; -AdminEmail &apos;&quot; &amp; in_AdminEmail &amp; &quot;&apos;&quot;]">
+        <ui:InvokePowerShell.Parameters>
+          <scg:Dictionary x:TypeArguments="x:String, InArgument" />
+        </ui:InvokePowerShell.Parameters>
+        <ui:InvokePowerShell.PowerShellVariables>
+          <scg:Dictionary x:TypeArguments="x:String, Argument" />
+        </ui:InvokePowerShell.PowerShellVariables>
+      </ui:InvokePowerShell>
+      <Assign DisplayName="Set the exit code to 0 indicating successful execution." sap2010:WorkflowViewState.IdRef="Assign_3">
+        <Assign.To>
+          <OutArgument x:TypeArguments="x:Int32">[out_ExitCode]</OutArgument>
+        </Assign.To>
+        <Assign.Value>
+          <InArgument x:TypeArguments="x:Int32">[0]</InArgument>
+        </Assign.Value>
+      </Assign>
+      <ui:LogMessage DisplayName="Log a message indicating the completion of the process and the location of the logs." sap2010:WorkflowViewState.IdRef="LogMessage_2" Level="Info" Message="[&quot;Done. See logs in &quot; &amp; in_SourcePath &amp; &quot;\\logs\\&quot;]" />
+    </Sequence>
   </Sequence>
 </Activity>

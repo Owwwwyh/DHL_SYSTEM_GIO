@@ -49,3 +49,10 @@ CLAUDE.md
 # internal docs — only README.md is published
 *.md
 !README.md
+
+# UiPath Studio working files
+uipath/.local/
+uipath/.objects/
+uipath/.project/
+uipath/.settings/
+uipath/.tmh/

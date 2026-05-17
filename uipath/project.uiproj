@@ -1,0 +1,6 @@
+{
+  "Name": "DHL.KB.Ingestion",
+  "ProjectType": "Process",
+  "Description": "DHL Knowledge Base RPA - reads new files from Google Drive / Outlook / a watch folder, runs duplicate-check, ingests into the KB API, triggers Gemini processing, and sends a daily admin summary email.",
+  "MainFile": "Main.xaml"
+}

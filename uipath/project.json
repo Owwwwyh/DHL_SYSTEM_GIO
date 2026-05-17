@@ -1,26 +1,61 @@
 {
   "name": "DHL.KB.Ingestion",
+  "projectId": "82963df4-4ba6-47c5-abd5-95faa949261c",
   "description": "DHL Knowledge Base RPA - reads new files from Google Drive / Outlook / a watch folder, runs duplicate-check, ingests into the KB API, triggers Gemini processing, and sends a daily admin summary email.",
   "main": "Main.xaml",
   "dependencies": {
-    "UiPath.System.Activities": "[24.10.4]",
-    "UiPath.WebAPI.Activities": "[1.21.0]",
-    "UiPath.Mail.Activities": "[1.23.4]",
-    "UiPath.GSuite.Activities": "[1.16.4]"
+    "UiPath.GSuite.Activities": "[2.0.3]",
+    "UiPath.Mail.Activities": "[1.23.11]",
+    "UiPath.System.Activities": "25.12.2",
+    "UiPath.WebAPI.Activities": "[1.21.0]"
   },
+  "webServices": [],
+  "entitiesStores": [],
   "schemaVersion": "4.0",
   "studioVersion": "24.10.0.0",
   "projectVersion": "1.0.0",
   "runtimeOptions": {
     "autoDispose": false,
+    "netFrameworkLazyLoading": false,
+    "isPausable": true,
     "isAttended": false,
     "requiresUserInteraction": false,
     "supportsPersistence": false,
-    "excludedLoggedData": ["Private:*", "*Password*"]
+    "workflowSerialization": "DataContract",
+    "excludedLoggedData": [
+      "Private:*",
+      "*password*",
+      "*Password*"
+    ],
+    "executionType": "Workflow",
+    "readyForPiP": false,
+    "startsInPiP": false,
+    "mustRestoreAllDependencies": false,
+    "pipType": "ChildSession"
   },
   "designOptions": {
-    "projectProfile": "Development",
-    "outputType": "Process"
+    "projectProfile": "Developement",
+    "outputType": "Process",
+    "libraryOptions": {
+      "privateWorkflows": []
+    },
+    "processOptions": {
+      "ignoredFiles": []
+    },
+    "fileInfoCollection": [],
+    "saveToCloud": false
   },
-  "expressionLanguage": "VisualBasic"
+  "expressionLanguage": "VisualBasic",
+  "entryPoints": [
+    {
+      "filePath": "Main.xaml",
+      "uniqueId": "82702222-d5be-45b5-a0b9-90761b4ebb4e",
+      "input": [],
+      "output": []
+    }
+  ],
+  "isTemplate": false,
+  "templateProjectData": {},
+  "publishData": {},
+  "targetFramework": "Windows"
 }
