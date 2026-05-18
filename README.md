@@ -40,7 +40,7 @@
 
 1. **Ingests raw inputs** from two parallel paths:
    - **Web users** paste text or upload files via a clean drag-and-drop interface
-   - **UiPath robots** sweep folders, mailboxes, or Google Drive and POST files via a REST API
+   - **RPA bots** sweep a local watch folder or a Google Drive folder and POST files via a REST API
 2. **Processes** every input with **Google Gemini AI** to extract a structured SOP — title, summary, numbered steps, tags, related links — even from messy or partially-structured source material
 3. **Detects duplicates** via file hashing (rejects anything seen in the last 14 days)
 4. **Detects conflicts** by comparing each new draft against published article tags + titles, flagging overlap automatically
@@ -104,13 +104,14 @@ Every choice is justified by what the project actually needs.
    │                        ▲
    │                        │ x-api-key header
    │                        │
-   └──── UiPath Bot ────────┘
-        (uipath/Main.xaml)
-        - Read files (Drive/Outlook/folder)
-        - Hash + dedup check
+   └──── RPA Bot ───────────┘
+        (uipath/Main.xaml + Run-All-Sources.ps1)
+        - Pull-Drive.ps1:  Google Drive folder → F:\DHL_Inbox
+        - Run-Bot.ps1:     watch F:\DHL_Inbox, hash + dedup check
         - POST /api/ingest → /api/process → /api/articles/{id}/status
         - TRY/CATCH + retry 3x + screenshot on error
         - POST /api/summary-report at end of run
+        - Windows Scheduled Task fires the orchestrator every minute
 ```
 
 **Single REST API serves both humans and robots.** The same `/api/articles` route serves a browser session AND an `x-api-key`-authenticated bot. No duplicate business logic. Implemented in `src/lib/rbac.ts:requireRole()`.
@@ -246,23 +247,39 @@ x-api-key: <UIPATH_API_KEY>
 
 ## RPA integration (UiPath)
 
-Project at [`uipath/`](./uipath/). The workflow ([`uipath/Main.xaml`](./uipath/Main.xaml)) implements:
+Project at [`uipath/`](./uipath/). Two ingestion sources are wired in today:
 
-**Inputs:** `BaseUrl`, `ApiKey`, `SourceType` (`googledrive` / `outlook` / `folder`), `SourcePath`, `AdminEmail`
+| Source | How | Script |
+|---|---|---|
+| **Local watch folder** | Drop a file into `F:\DHL_Inbox` | [`uipath/Run-Bot.ps1`](./uipath/Run-Bot.ps1) |
+| **Google Drive folder** | Bot polls the folder and downloads new files | [`uipath/Pull-Drive.ps1`](./uipath/Pull-Drive.ps1) |
 
-**Branching logic:**
-- **Decision 1:** `isDuplicate` from `/api/duplicate-check` — true ⇒ skip + log, false ⇒ continue
-- **Decision 2:** processing success — true ⇒ optional auto-promote to `reviewed`, false ⇒ exception path
+The **orchestrator** [`uipath/Run-All-Sources.ps1`](./uipath/Run-All-Sources.ps1) runs `Pull-Drive` then `Run-Bot` in sequence. The UiPath workflow [`uipath/Main.xaml`](./uipath/Main.xaml) invokes the same PowerShell pipeline through `InvokePowerShell`, so Studio and a plain `pwsh` give identical behaviour.
 
-**Exception path (TRY/CATCH around each file):**
-1. Take screenshot to `logs/screenshots/<timestamp>.png`
-2. Log error with stack trace
-3. Retry up to 3 times with exponential backoff
-4. After exhaustion, append row to `logs/errors.csv`
+**Auto-ingest:** a Windows Scheduled Task fires `Run-All-Sources.ps1` every minute. Files dropped into the local inbox or the Drive folder appear in the KB as draft articles within ~60 seconds. Setup recipe in [`uipath/HOW_TO_RUN.md`](./uipath/HOW_TO_RUN.md).
 
-**End-of-run:** POST to `/api/summary-report` → admin email digest.
+**Per-file pipeline (TRY/CATCH wrapped):**
+1. SHA256 hash → `POST /api/duplicate-check`. True ⇒ skip + log + move to `processed/`.
+2. `POST /api/ingest` (multipart file upload) ⇒ capture `rawInputId`.
+3. `POST /api/process` ⇒ Gemini extracts `{title, summary, steps, tags}` ⇒ Article created (draft).
+4. (Optional) `POST /api/articles/:id/status {status:"reviewed"}` when `-AutoPromote`.
+5. Move source file to `processed/`. Log `OK`.
 
-**Why parallel auth:** the bot can't store cookies / complete OAuth flows, but it needs the same data the web users see. One key, server-side rotation, no shared secrets in client code.
+**On failure:** retry up to 3 times with exponential backoff, take a desktop screenshot to `logs/screenshots/<timestamp>.png`, append a row to `logs/errors.csv`.
+
+**End-of-run:** `POST /api/summary-report` → admin email digest.
+
+**Dedup is automatic at three layers** (you never have to manually clean anything):
+
+| Layer | What it tracks | Where |
+|---|---|---|
+| Drive `fileId` set | files already downloaded from the Drive folder | `uipath/.secrets/drive-seen-fileids.json` |
+| Local inbox move | files already ingested | `F:\DHL_Inbox\processed\` |
+| Server-side hash | content already seen in last 14 days | Postgres `RawInput.fileHash` |
+
+**Google Drive auth** uses the OAuth 2.0 installed-application flow. First run pops a browser for sign-in (grants `drive.readonly`); a refresh token is then persisted to `uipath/.secrets/oauth-refresh-token.json` (gitignored) so subsequent runs are unattended. Full Google Cloud setup in [`uipath/HOW_TO_RUN.md`](./uipath/HOW_TO_RUN.md).
+
+**Why parallel auth:** the bot can't store browser cookies / complete an interactive NextAuth flow, but it needs the same data the web users see. One `x-api-key` env var, server-side rotation, no shared secrets in client code.
 
 ---
 
@@ -392,7 +409,11 @@ CI workflow at [`.github/workflows/ci.yml`](./.github/workflows/ci.yml).
 │   ├── e2e/                   # Playwright
 │   └── unit/                  # Vitest
 ├── uipath/
-│   ├── Main.xaml              # workflow with TRY/CATCH + retries
+│   ├── Main.xaml              # workflow that wraps Run-Bot.ps1 via InvokePowerShell
+│   ├── Run-Bot.ps1            # folder watcher: dedup + ingest + process per file
+│   ├── Pull-Drive.ps1         # OAuth + Drive API → downloads new files to F:\DHL_Inbox
+│   ├── Run-All-Sources.ps1    # orchestrator: Pull-Drive → Run-Bot (entry point for cron)
+│   ├── HOW_TO_RUN.md          # setup + demo guide
 │   ├── README.md              # API contract for the bot
 │   └── project.json
 ├── scripts/

@@ -46,9 +46,10 @@ CLAUDE.md
 /test-results/
 /playwright-report/
 
-# internal docs — only README.md is published
+# internal docs — only README.md is published (plus uipath HOW_TO_RUN)
 *.md
 !README.md
+!uipath/HOW_TO_RUN.md
 
 # UiPath Studio working files
 uipath/.local/
@@ -56,3 +57,6 @@ uipath/.objects/
 uipath/.project/
 uipath/.settings/
 uipath/.tmh/
+
+# RPA credentials (Google OAuth client + refresh token, etc.)
+uipath/.secrets/
